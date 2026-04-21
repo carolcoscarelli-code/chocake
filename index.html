@@ -4153,6 +4153,24 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
         </div>
       </div>
 
+
+      <div class="form-group" style="margin-top:4px">
+        <label style="margin-bottom:8px;display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em">Vendida em quais lojas?</label>
+        <div style="display:flex;gap:20px;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="edit-loja-funcionarios" style="accent-color:#E85D75;width:15px;height:15px" onchange="_agendarAutoSave()">
+            🏪 Funcionários
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="edit-loja-viladaserra" style="accent-color:#6BAF84;width:15px;height:15px" onchange="_agendarAutoSave()">
+            🏡 Vila da Serra
+          </label>
+          <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+            <input type="checkbox" id="edit-loja-sion" style="accent-color:#7B8DD4;width:15px;height:15px" onchange="_agendarAutoSave()">
+            🏬 Sion
+          </label>
+        </div>
+      </div>
       <!-- Banner Receita Base -->
       <div id="edit-receita-base-banner" style="display:none;background:rgba(107,175,132,.12);border:1.5px solid #6BAF84;border-radius:10px;padding:12px 16px;margin-bottom:14px;align-items:center;justify-content:space-between;gap:12px">
         <div>
@@ -4589,6 +4607,23 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
       </div>
     </div>
     <div id="ft-preview-cmv" style="display:none;background:var(--bege);border-radius:10px;padding:12px 16px;margin-bottom:4px;font-size:13px;color:var(--marrom-mid);font-weight:600"></div>
+    <div class="form-group" style="margin-top:16px;margin-bottom:4px">
+      <label style="margin-bottom:8px;display:block;font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em">Vendida em quais lojas?</label>
+      <div style="display:flex;gap:20px;flex-wrap:wrap">
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="ft-loja-funcionarios" checked style="accent-color:#E85D75;width:15px;height:15px">
+          🏪 Funcionários
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="ft-loja-viladaserra" checked style="accent-color:#6BAF84;width:15px;height:15px">
+          🏡 Vila da Serra
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer;font-weight:600">
+          <input type="checkbox" id="ft-loja-sion" checked style="accent-color:#7B8DD4;width:15px;height:15px">
+          🏬 Sion
+        </label>
+      </div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-ghost" onclick="closeModal('modal-ficha');limparFormFicha()">Cancelar</button>
       <button class="btn btn-primary" onclick="salvarFicha()">Salvar Ficha</button>
@@ -8295,13 +8330,16 @@ function salvarFicha() {
   const nome = document.getElementById('ft-nome')?.value?.trim();
   if (!nome) { showToast('⚠️ Informe o nome do produto'); return; }
   const cat  = document.getElementById('ft-cat')?.value || 'Outro';
+  const _lojasFicha = ['funcionarios','viladaserra','sion']
+    .filter(id => document.getElementById('ft-loja-'+id)?.checked !== false);
   const novaFicha = {
     id: 'custom_' + Date.now(), nome, categoria: cat, emoji: _EMOJI_CAT[cat]||'🎂',
     _custom: true,
     rendimento: document.getElementById('ft-rendimento')?.value || '',
     forno: '', ingredientes: ingredientesForm.filter(i => i.nome),
     preparo: (document.getElementById('ft-preparo')?.value||'').split('\n').filter(p=>p.trim()),
-    preco: parseFloat(document.getElementById('ft-preco')?.value||0)||0
+    preco: parseFloat(document.getElementById('ft-preco')?.value||0)||0,
+    lojas: _lojasFicha.length ? _lojasFicha : ['funcionarios','viladaserra','sion']
   };
   fichas.unshift(novaFicha);
   fichasFiltradas = [...fichas];
@@ -8339,6 +8377,12 @@ function abrirFichaParaEditar(id) {
   document.getElementById('edit-ficha-titulo').textContent = '✏️ ' + f.nome;
   document.getElementById('edit-nome').value      = f.nome || '';
   document.getElementById('edit-rendimento').value = f.rendimento || '';
+  // Popular checkboxes de lojas
+  const _lojas = f.lojas || ['funcionarios','viladaserra','sion'];
+  ['funcionarios','viladaserra','sion'].forEach(id => {
+    const cb = document.getElementById('edit-loja-' + id);
+    if (cb) cb.checked = _lojas.includes(id);
+  });
   document.getElementById('edit-tempo').value     = f.tempo || f.forno || '';
   document.getElementById('edit-preco').value     = f.preco > 0 ? f.preco : '';
   document.getElementById('edit-preparo').value   = (f.preparo || []).join('\n');
@@ -8557,6 +8601,9 @@ async function salvarEdicaoFicha() {
   if (!nome) { showToast('⚠️ Informe o nome do produto'); return; }
 
   const cat = document.getElementById('edit-cat')?.value || fichaAberta.categoria;
+  const _lojasFichaEdit = ['funcionarios','viladaserra','sion']
+    .filter(id => document.getElementById('edit-loja-'+id)?.checked !== false);
+  fichaAberta.lojas       = _lojasFichaEdit.length ? _lojasFichaEdit : (fichaAberta.lojas || ['funcionarios','viladaserra','sion']);
   fichaAberta.nome        = nome;
   fichaAberta.categoria   = cat;
   fichaAberta.emoji       = _EMOJI_CAT[cat] || fichaAberta.emoji || '🎂';
@@ -8618,6 +8665,9 @@ function _agendarAutoSave() {
     // Coleta dados atuais do form sem fechar o modal
     const nome = document.getElementById('edit-nome')?.value?.trim();
     if (!nome) return;
+    const _lojasAuto = ['funcionarios','viladaserra','sion']
+      .filter(id => document.getElementById('edit-loja-'+id)?.checked !== false);
+    fichaAberta.lojas      = _lojasAuto.length ? _lojasAuto : (fichaAberta.lojas || ['funcionarios','viladaserra','sion']);
     fichaAberta.nome       = nome;
     fichaAberta.categoria  = document.getElementById('edit-cat')?.value || fichaAberta.categoria;
     fichaAberta.rendimento = document.getElementById('edit-rendimento')?.value?.trim() || '';
@@ -10044,7 +10094,15 @@ function _isReceitaBase(cat) {
 }
 function _fichasParaPrec() {
   return fichas
-    .filter(f => !_isReceitaBase(f.categoria))
+    .filter(f => {
+      if (_isReceitaBase(f.categoria)) return false;
+      // Se em contexto de loja, filtra apenas fichas vendidas naquela loja
+      if (_contextoAtual?.tipo === 'loja') {
+        const lojas = f.lojas || ['funcionarios','viladaserra','sion'];
+        return lojas.includes(_contextoAtual.id);
+      }
+      return true;
+    })
     .map(f => ({ nome: f.nome, preco: f.preco || 0, categoria: f.categoria }));
 }
 
@@ -10089,7 +10147,14 @@ function _calcLinha(nome, canal, precoFallback) {
   const taxa_pct       = canal === 'ifood' ? 0 : (cfg.taxa_pct || 0);
   const taxa_ifood_pct = canal === 'ifood' ? (cfg.taxa_ifood_pct  || 0) : 0;
   const incentivos_pct = canal === 'ifood' ? (cfg.incentivos_pct  || 0) : 0;
-  const margem_pct     = cfg.margem_pct || 40;
+  // Se em contexto de loja, usa a margem configurada para aquela loja
+  let margem_pct;
+  if (_contextoAtual?.tipo === 'loja' && canal === 'loja') {
+    const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
+    margem_pct = margens[_contextoAtual.id] ?? (cfg.margem_pct || 40);
+  } else {
+    margem_pct = cfg.margem_pct || 40;
+  }
   const key            = canal + ':' + nome;
   const precoIsUser    = PREC_PRECOS_USER && PREC_PRECOS_USER[key] != null;
   const preco          = precoIsUser ? PREC_PRECOS_USER[key] : (precoFallback || 0);
@@ -10410,7 +10475,39 @@ function _tabelaPrecPorCategoria(canal, tituloCanal, extraHead, extraCell) {
 function renderTabelaLoja() {
   const el = document.getElementById('prec-painel-loja');
   if (!el) return;
-  el.innerHTML = _painelParamsPrec('loja') + _tabelaPrecPorCategoria('loja', '🏪 Loja', '', null);
+  // Se em contexto de loja: mostra banner de margem da loja antes da tabela
+  let bannerMargem = '';
+  if (_contextoAtual?.tipo === 'loja') {
+    const lojaId = _contextoAtual.id;
+    const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
+    const margem = margens[lojaId] ?? 15;
+    bannerMargem = `
+      <div class="card" style="margin-bottom:16px;padding:16px 20px;background:linear-gradient(135deg,#FDF0EE,#FFF7F2);border:1.5px solid rgba(232,175,163,.4)">
+        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+          <div style="flex:1">
+            <div style="font-size:13px;font-weight:800;color:#5C3D2E">📊 Margem padrão da loja — ${_contextoAtual.emoji} ${_contextoAtual.nome}</div>
+            <div style="font-size:12px;color:#A89A94;margin-top:2px">Aplicada sobre o custo de produção de todos os produtos desta loja</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <input type="number" id="input-margem-loja" value="${margem}" min="0" max="200" step="1"
+              style="width:72px;padding:8px 10px;border:2px solid #E8AFA3;border-radius:10px;font-size:18px;font-weight:800;color:#5C3D2E;text-align:center"
+              oninput="_salvarMargemLoja(this.value)">
+            <span style="font-size:20px;font-weight:800;color:#E85D75">%</span>
+          </div>
+        </div>
+      </div>`;
+  }
+  el.innerHTML = bannerMargem + _painelParamsPrec('loja') + _tabelaPrecPorCategoria('loja', '🏪 Loja', '', null);
+}
+
+function _salvarMargemLoja(valor) {
+  if (!_contextoAtual?.id) return;
+  const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
+  margens[_contextoAtual.id] = parseFloat(valor) || 0;
+  localStorage.setItem('_margemLoja', JSON.stringify(margens));
+  // Recalcula tabela após pequeno delay
+  clearTimeout(_salvarMargemLoja._t);
+  _salvarMargemLoja._t = setTimeout(renderTabelaLoja, 600);
 }
 
 function renderTabelaIfood() {
@@ -19090,7 +19187,7 @@ function _voltarSeletor() {
 // ════════════════════════════════════════════════════════════════════════════
 
 const PAGINAS_GRUPO_ONLY = new Set([
-  'fichas','cmv','insumos','fornecedores','compras','producao','transferencias',
+  'fichas','insumos','fornecedores','compras','producao','transferencias',
   'mkt-calendario','mkt-metricas','mkt-parcerias','mkt-campanhas','mkt-trafego','mkt-legendas',
   'gerador','sobre'
 ]);
