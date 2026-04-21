@@ -5423,7 +5423,25 @@ function showPage(id, btn) {
   if (id === 'mkt-trafego')     initTrafegoMkt();
   if (id === 'mkt-legendas')    initLegendasMkt();
   if (id === 'engenharia')      initEngenharia();
-  if (id === 'fluxo')           initFluxo();
+  if (id === 'fluxo') {
+    initFluxo();
+    // Filtra tabs pelo contexto de loja
+    const _lnCtx = typeof _ctxLojaAtivaNome === 'function' ? _ctxLojaAtivaNome() : null;
+    const _fluxoTabs = document.querySelectorAll('#fluxo-loja-tabs .tab');
+    if (_lnCtx) {
+      _fluxoTabs.forEach(function(b) {
+        var oc = b.getAttribute('onclick') || '';
+        var m = oc.match(/switchFluxoLoja\('([^']+)'/);
+        if (!m) return;
+        b.style.display = (m[1] === _lnCtx || m[1] === 'todas') ? 'none' : 'none'; // hide all except loja
+        if (m[1] === _lnCtx) { b.style.display = ''; switchFluxoLoja(_lnCtx, b); }
+      });
+      document.getElementById('fluxo-loja-tabs').style.display = 'none';
+    } else {
+      _fluxoTabs.forEach(function(b) { b.style.display = ''; });
+      document.getElementById('fluxo-loja-tabs').style.display = '';
+    }
+  }
   if (id === 'conciliacao')     initConciliacao();
   if (id === 'clientes')        initClientes();
   if (id === 'custos-variaveis') initCustosVariaveis();
@@ -5437,7 +5455,16 @@ function showPage(id, btn) {
   if (id === 'transferencias') initTransferencias();
   if (id === 'transferencias-produtos') renderCadastroProdutosMatriz();
   if (id === 'cardapio') renderCardapio();
-  if (id === 'dre') renderDRE();
+  if (id === 'dre') {
+    // Reset DRE view to match context before rendering
+    const _dreCtxLoja = typeof _ctxLojaAtivaNome === 'function' ? _ctxLojaAtivaNome() : null;
+    if (_dreCtxLoja && _DRE_VIEW === 'grupo') {
+      _DRE_VIEW = _contextoAtual ? _contextoAtual.id : 'grupo';
+    } else if (!_dreCtxLoja) {
+      _DRE_VIEW = 'grupo';
+    }
+    renderDRE();
+  }
   if (id === 'financeiro') _aplicarContextoFinanceiro();
 }
 
@@ -6407,13 +6434,24 @@ function renderDRE() {
     subtitleEl.textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
   }
 
-  // Tabs de navegação
+  // Tabs de navegação — filtradas por contexto
   const tabsEl = document.getElementById('dre-tabs');
   if (tabsEl) {
-    const tabs = [
+    const lojaCtx = _ctxLojaAtivaNome ? _ctxLojaAtivaNome() : null;
+    const isGrupoCtx = !lojaCtx;
+    // Auto-seleciona a view correta ao entrar no módulo
+    if (!isGrupoCtx && _DRE_VIEW === 'grupo') {
+      _DRE_VIEW = (_contextoAtual && _contextoAtual.id) || 'grupo';
+    }
+    let tabs = [
       { id: 'grupo', label: 'Grupo Chocake', emoji: '📊' },
       ...LOJAS_CONFIG.map(l => ({ id: l.id, label: l.nome, emoji: l.emoji }))
     ];
+    // Em contexto de loja: exibe só a aba dessa loja
+    if (!isGrupoCtx) {
+      const lojaId = _contextoAtual && _contextoAtual.id;
+      tabs = tabs.filter(t => t.id === lojaId);
+    }
     tabsEl.innerHTML = tabs.map(t =>
       `<button onclick="_dreMudarView('${t.id}')"
                class="btn ${_DRE_VIEW === t.id ? 'btn-primary' : 'btn-ghost'}"
@@ -19285,6 +19323,14 @@ function _mostrarAreaRestrita(id, btn) {
 
 
 
+
+// ── Helper: retorna nome da loja ativa (ou null se grupo) ───────────────────
+function _ctxLojaAtivaNome() {
+  if (!_contextoAtual || _contextoAtual.tipo !== 'loja') return null;
+  const mapa = { funcionarios:'Funcionários', viladaserra:'Vila da Serra', sion:'Sion' };
+  return mapa[_contextoAtual.id] || null;
+}
+
 // ── Filtra módulo Financeiro pelo contexto de loja ────────────────────────
 function _aplicarContextoFinanceiro() {
   const ctx = _contextoAtual;
@@ -19984,7 +20030,9 @@ function initPE() {
 }
 
 function renderPEKpis() {
-  const lojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const todasLojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const lojaCtx = typeof _ctxLojaAtivaNome === 'function' ? _ctxLojaAtivaNome() : null;
+  const lojas = lojaCtx ? [lojaCtx] : todasLojas;
   const totFixos = lojas.reduce((s, l) => s + ((typeof _totalFixosLoja === 'function') ? _totalFixosLoja(l) : PE_CONFIG[l].custosFixos), 0);
   const totPE    = lojas.reduce((s, l) => s + calcPE(l).pe, 0);
   const totFat   = lojas.reduce((s, l) => s + calcPE(l).fatRef, 0);
@@ -20019,7 +20067,9 @@ function renderPEKpis() {
 }
 
 function renderPECards() {
-  const lojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const todasLojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const lojaCtx = typeof _ctxLojaAtivaNome === 'function' ? _ctxLojaAtivaNome() : null;
+  const lojas = lojaCtx ? [lojaCtx] : todasLojas;
   const emojis = {'Funcionários':'🏪','Vila da Serra':'🏡','Sion':'🌿'};
 
   document.getElementById('pe-cards').innerHTML = lojas.map(loja => {
@@ -20135,7 +20185,12 @@ function renderPECards() {
 }
 
 function renderPETabela() {
-  const lojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const todasLojas = ['Funcionários', 'Vila da Serra', 'Sion'];
+  const lojaCtx = typeof _ctxLojaAtivaNome === 'function' ? _ctxLojaAtivaNome() : null;
+  const lojas = lojaCtx ? [lojaCtx] : todasLojas;
+  // Esconde tabela comparativa em contexto de loja única
+  var tabelaCard = document.querySelector('#page-ponto-equilibrio .card');
+  if (tabelaCard) tabelaCard.style.display = lojaCtx ? 'none' : '';
   document.getElementById('pe-tabela-body').innerHTML = lojas.map(loja => {
     const { cfg, imc, pe, peUn, fatRef, acimaPE, custosFixosAuto } = calcPE(loja);
     return `
