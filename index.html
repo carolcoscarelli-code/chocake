@@ -19300,7 +19300,9 @@ function _aplicarAcesso(user) {
 function _checkAcesso(pageId) {
   if (!_sessaoAtual) return false;
   const permitidas = PERFIL_PAGINAS[_sessaoAtual.perfil];
-  return permitidas === null || permitidas.has(pageId);
+  // null = admin (acesso total) | undefined = perfil desconhecido (libera tudo) | Set = verifica
+  if (permitidas === null || permitidas === undefined) return true;
+  return permitidas.has(pageId);
 }
 
 async function _fazerLogin() {
