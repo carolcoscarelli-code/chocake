@@ -19096,16 +19096,16 @@ function _voltarSeletor() {
 }
 
 function _aplicarNavContexto(tipo) {
+  // Por enquanto mostra todos os módulos em qualquer contexto.
+  // Só respeita o filtro de perfil (admin/gerente/cozinha).
   document.querySelectorAll('.nav-item[data-ctx]').forEach(btn => {
-    const ctx = btn.getAttribute('data-ctx');
-    const ctxOk = ctx === 'both' || ctx === tipo;
     const perfilOk = btn.dataset.perfilOk !== '0';
-    btn.style.display = (ctxOk && perfilOk) ? '' : 'none';
+    btn.style.display = perfilOk ? '' : 'none';
   });
-  // Esconde seções que ficaram vazias
+  // Garante que seções com pelo menos 1 item visível apareçam
   document.querySelectorAll('.nav-section').forEach(sec => {
-    const btns = sec.querySelectorAll('.nav-item[data-ctx]');
-    if (!btns.length) return; // seções sem data-ctx ficam sempre visíveis
+    const btns = sec.querySelectorAll('.nav-item');
+    if (!btns.length) return;
     const algumVisivel = Array.from(btns).some(b => b.style.display !== 'none');
     sec.style.display = algumVisivel ? '' : 'none';
   });
