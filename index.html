@@ -4691,7 +4691,8 @@ const _PER_LOJA_KEYS = new Set([
   'clientes','custosFixosPorLoja','custosFixos','custosVariaveis','peConfig',
   'notasFiscais','contasBancarias','extratoLancamentos',
   'rhColaboradores','rhPonto','rhDesligamentos','rhDocs',
-  'mktPosts','mktMetricas'
+  'mktPosts','mktMetricas',
+  'registrosTemp','pedidosRep'   // Processos & Padrões — isolado por loja
 ]);
 
 // Loja correntemente ativa
@@ -5333,6 +5334,10 @@ function _trocarLoja(novaLoja) {
   EXTRATO_LANC     = JSON.parse(localStorage.getItem(_lKey('extratoLancamentos'))|| '[]');
   CARDAPIO         = JSON.parse(localStorage.getItem(_lKey('cardapio'))          || '[]');
   vendas           = JSON.parse(AppStorage.getItem('vendas') || '[]');
+
+  // Recarrega processos da loja
+  REGISTROS_TEMP = JSON.parse(localStorage.getItem(_lKey('registrosTemp')) || '[]');
+  PEDIDOS_REP    = JSON.parse(localStorage.getItem(_lKey('pedidosRep'))    || '[]');
 
   // Recarrega custos da loja
   try {
@@ -11087,14 +11092,13 @@ function renderProducao() {
 // ========== PROCESSOS & PADRONIZAÇÃO ==========
 
 // ── Storage em memória ──────────────────────────────────────────────────────
-let REGISTROS_TEMP= JSON.parse(localStorage.getItem('registrosTemp')|| '[]');
-let PEDIDOS_REP   = JSON.parse(localStorage.getItem('pedidosRep')   || '[]');
+let REGISTROS_TEMP= JSON.parse(localStorage.getItem(_lKey('registrosTemp'))|| '[]');
+let PEDIDOS_REP   = JSON.parse(localStorage.getItem(_lKey('pedidosRep'))   || '[]');
 
 function salvarStorage() {
   try {
-    localStorage.setItem('fichasPro',     JSON.stringify(FICHAS_PRO));
-    localStorage.setItem('registrosTemp', JSON.stringify(REGISTROS_TEMP));
-    localStorage.setItem('pedidosRep',    JSON.stringify(PEDIDOS_REP));
+    localStorage.setItem(_lKey('registrosTemp'), JSON.stringify(REGISTROS_TEMP));
+    localStorage.setItem(_lKey('pedidosRep'),    JSON.stringify(PEDIDOS_REP));
   } catch(e) {}
 }
 
