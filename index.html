@@ -5394,16 +5394,8 @@ function _trocarLoja(novaLoja, forcar) {
 }
 
 function showPage(id, btn) {
-  // Verifica permissão de acesso
-  if (_sessaoAtual && !_checkAcesso(id)) {
-    showToast('⛔ Acesso não permitido para seu perfil.');
-    return;
-  }
-  // Verifica restrição de contexto (área do Grupo Chocake)
-  if (_checkRestricaoGrupo(id)) {
-    _mostrarAreaRestrita(id, btn);
-    return;
-  }
+  // Controle de acesso feito pelo login Firebase — sem bloqueio extra por perfil
+  // Restrição de contexto desabilitada (todas as páginas acessíveis)
   document.querySelectorAll('.page').forEach(p => {
     p.classList.remove('active');
     p.style.display = ''; // limpa override inline de _mostrarAreaRestrita
