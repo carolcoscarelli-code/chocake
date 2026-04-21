@@ -940,14 +940,11 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
   </div>
 
 
-  <!-- CONTEXTO ATIVO (badge) -->
-  <div class="sidebar-ctx-badge" id="sidebar-ctx-badge" onclick="_voltarSeletor()" title="Trocar loja">
-    <span class="sidebar-ctx-dot" id="sidebar-ctx-dot"></span>
-    <span class="sidebar-ctx-nome" id="sidebar-ctx-nome">—</span>
-    <span class="sidebar-ctx-trocar">↩ trocar</span>
+  <!-- LOJA SWITCHER -->
+  <div class="loja-switcher" id="loja-switcher">
+    <div class="loja-switcher-label">Loja ativa</div>
+    <!-- populated by _renderLojaSwitcher() -->
   </div>
-  <!-- loja-switcher legado (oculto) -->
-  <div class="loja-switcher" id="loja-switcher" style="display:none"></div>
 
   <nav class="sidebar-nav">
 
@@ -961,19 +958,19 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- COMERCIAL -->
     <div class="nav-section">
       <span class="nav-section-label">Comercial</span>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('vendas', this)">
+      <button class="nav-item" onclick="showPage('vendas', this)">
         <span class="icon">🛒</span> Vendas
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('pdv', this)">
+      <button class="nav-item" onclick="showPage('pdv', this)">
         <span class="icon">🖥️</span> PDV
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('cardapio', this)">
+      <button class="nav-item" onclick="showPage('cardapio', this)">
         <span class="icon">🍽️</span> Cardápio
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('encomendas', this)">
+      <button class="nav-item" onclick="showPage('encomendas', this)">
         <span class="icon">📅</span> Encomendas
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('clientes', this)">
+      <button class="nav-item" onclick="showPage('clientes', this)">
         <span class="icon">👤</span> Clientes
       </button>
     </div>
@@ -981,19 +978,19 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- FINANCEIRO -->
     <div class="nav-section">
       <span class="nav-section-label">Financeiro</span>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('financeiro', this)">
+      <button class="nav-item" onclick="showPage('financeiro', this)">
         <span class="icon">💰</span> Custos
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('dre', this)">
+      <button class="nav-item" onclick="showPage('dre', this)">
         <span class="icon">📄</span> DRE
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('ponto-equilibrio', this)">
+      <button class="nav-item" onclick="showPage('ponto-equilibrio', this)">
         <span class="icon">⚖️</span> Ponto de Equilíbrio
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('fluxo', this)">
+      <button class="nav-item" onclick="showPage('fluxo', this)">
         <span class="icon">🔄</span> Fluxo de Caixa
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('conciliacao', this)">
+      <button class="nav-item" onclick="showPage('conciliacao', this)">
         <span class="icon">🏦</span> Conciliação
       </button>
     </div>
@@ -1001,25 +998,25 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- PRODUÇÃO -->
     <div class="nav-section">
       <span class="nav-section-label">Produção</span>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('fichas', this)">
+      <button class="nav-item" onclick="showPage('fichas', this)">
         <span class="icon">📋</span> Fichas Técnicas
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('cmv', this)">
+      <button class="nav-item" onclick="showPage('cmv', this)">
         <span class="icon">🧮</span> Precificação / CMV
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('insumos', this)">
+      <button class="nav-item" onclick="showPage('insumos', this)">
         <span class="icon">🧂</span> Insumos
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('fornecedores', this)">
+      <button class="nav-item" onclick="showPage('fornecedores', this)">
         <span class="icon">🤝</span> Fornecedores
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('compras', this)">
+      <button class="nav-item" onclick="showPage('compras', this)">
         <span class="icon">🛒</span> Lista de Compras
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('producao', this)">
+      <button class="nav-item" onclick="showPage('producao', this)">
         <span class="icon">⚗️</span> Prev. de Produção
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('transferencias', this)">
+      <button class="nav-item" onclick="showPage('transferencias', this)">
         <span class="icon">🏭</span> Produção → Lojas
       </button>
     </div>
@@ -1027,10 +1024,10 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- OPERAÇÕES -->
     <div class="nav-section">
       <span class="nav-section-label">Operações</span>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('processos', this)">
+      <button class="nav-item" onclick="showPage('processos', this)">
         <span class="icon">⚙️</span> Processos & Padrões
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('organograma', this)">
+      <button class="nav-item" onclick="showPage('organograma', this)">
         <span class="icon">🏗️</span> Organograma
       </button>
     </div>
@@ -1038,7 +1035,7 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- DEPARTAMENTO PESSOAL -->
     <div class="nav-section">
       <span class="nav-section-label">Departamento Pessoal</span>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('rh', this)">
+      <button class="nav-item" onclick="showPage('rh', this)">
         <span class="icon">👥</span> Recursos Humanos
       </button>
     </div>
@@ -1046,13 +1043,13 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- INTELIGÊNCIA -->
     <div class="nav-section">
       <span class="nav-section-label">Inteligência</span>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('engenharia', this)">
+      <button class="nav-item" onclick="showPage('engenharia', this)">
         <span class="icon">🧠</span> Eng. de Cardápio
       </button>
-      <button data-ctx="loja" class="nav-item" onclick="showPage('cmv-real', this)">
+      <button class="nav-item" onclick="showPage('cmv-real', this)">
         <span class="icon">📊</span> CMV Teórico × Real
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('gerador', this)">
+      <button class="nav-item" onclick="showPage('gerador', this)">
         <span class="icon">✨</span> Gerador de Descrições
       </button>
     </div>
@@ -1060,22 +1057,22 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- MARKETING -->
     <div class="nav-section">
       <span class="nav-section-label">Marketing</span>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-calendario', this)">
+      <button class="nav-item" onclick="showPage('mkt-calendario', this)">
         <span class="icon">📆</span> Calendário
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-metricas', this)">
+      <button class="nav-item" onclick="showPage('mkt-metricas', this)">
         <span class="icon">📈</span> Métricas
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-parcerias', this)">
+      <button class="nav-item" onclick="showPage('mkt-parcerias', this)">
         <span class="icon">🤝</span> Parcerias & Collabs
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-campanhas', this)">
+      <button class="nav-item" onclick="showPage('mkt-campanhas', this)">
         <span class="icon">🎯</span> Campanhas
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-trafego', this)">
+      <button class="nav-item" onclick="showPage('mkt-trafego', this)">
         <span class="icon">💸</span> Tráfego Pago
       </button>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('mkt-legendas', this)">
+      <button class="nav-item" onclick="showPage('mkt-legendas', this)">
         <span class="icon">✍️</span> Gerador de Legendas
       </button>
     </div>
@@ -1083,7 +1080,7 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <!-- A EMPRESA -->
     <div class="nav-section">
       <span class="nav-section-label">A Empresa</span>
-      <button data-ctx="grupo" class="nav-item" onclick="showPage('sobre', this)">
+      <button class="nav-item" onclick="showPage('sobre', this)">
         <span class="icon">🍫</span> Sobre a Chocake
       </button>
     </div>
@@ -5326,6 +5323,11 @@ function showPage(id, btn) {
   // Verifica permissão de acesso
   if (_sessaoAtual && !_checkAcesso(id)) {
     showToast('⛔ Acesso não permitido para seu perfil.');
+    return;
+  }
+  // Verifica restrição de contexto (área do Grupo Chocake)
+  if (_checkRestricaoGrupo(id)) {
+    _mostrarAreaRestrita(id, btn);
     return;
   }
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -19043,10 +19045,7 @@ const _CTX_CONFIG = {
 };
 
 function mostrarSeletorContexto() {
-  // Esconde o app shell (sidebar + content)
-  document.querySelector('.sidebar')?.style.setProperty('display', 'none');
-  document.getElementById('app-content')?.style.setProperty('display', 'none');
-  // Mostra a tela de seleção
+  // Mostra a tela de seleção (overlay sobre o app)
   document.getElementById('screen-seletor')?.classList.remove('hidden');
 }
 
@@ -19063,16 +19062,6 @@ function selecionarContexto(tipo, id) {
 
   // Esconde tela de seleção
   document.getElementById('screen-seletor')?.classList.add('hidden');
-
-  // Mostra app shell
-  document.querySelector('.sidebar')?.style.removeProperty('display');
-  document.getElementById('app-content')?.style.removeProperty('display');
-
-  // Atualiza badge no sidebar
-  const dot  = document.getElementById('sidebar-ctx-dot');
-  const nome = document.getElementById('sidebar-ctx-nome');
-  if (dot)  dot.style.background = cfg.cor;
-  if (nome) nome.textContent = cfg.emoji + ' ' + cfg.nome;
 
   // Atualiza badge na topbar
   const badge = document.getElementById('topbar-loja-badge');
@@ -19094,6 +19083,54 @@ function selecionarContexto(tipo, id) {
 function _voltarSeletor() {
   mostrarSeletorContexto();
 }
+
+
+// ════════════════════════════════════════════════════════════════════════════
+// RESTRIÇÃO POR CONTEXTO — Área exclusiva do Grupo Chocake
+// ════════════════════════════════════════════════════════════════════════════
+
+const PAGINAS_GRUPO_ONLY = new Set([
+  'fichas','cmv','insumos','fornecedores','compras','producao','transferencias',
+  'mkt-calendario','mkt-metricas','mkt-parcerias','mkt-campanhas','mkt-trafego','mkt-legendas',
+  'gerador','sobre'
+]);
+
+function _checkRestricaoGrupo(pageId) {
+  if (!_contextoAtual) return false;
+  return _contextoAtual.tipo === 'loja' && PAGINAS_GRUPO_ONLY.has(pageId);
+}
+
+function _mostrarAreaRestrita(id, btn) {
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const bc = document.getElementById('topbar-breadcrumb');
+  if (bc) bc.innerHTML = '<strong>🔒 Área Restrita</strong>';
+  document.querySelectorAll('.page').forEach(p => p.style.display = 'none');
+  let restEl = document.getElementById('_page-restrita');
+  if (!restEl) {
+    restEl = document.createElement('div');
+    restEl.id = '_page-restrita';
+    restEl.className = 'page';
+    restEl.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;gap:20px;padding:40px;text-align:center;';
+    document.getElementById('app-content')?.appendChild(restEl);
+  }
+  restEl.innerHTML = `
+    <div style="font-size:56px">🔒</div>
+    <div style="font-size:22px;font-weight:700;color:#5C3D2E;font-family:'Cormorant Garamond',serif">
+      Área exclusiva do Grupo Chocake
+    </div>
+    <div style="font-size:14px;color:#A89A94;max-width:380px;line-height:1.6">
+      Esta seção é gerenciada centralmente pelo Grupo.<br>
+      Para acessá-la, volte e escolha <strong>Grupo Chocake</strong>.
+    </div>
+    <button onclick="_voltarSeletor()"
+      style="padding:14px 28px;background:#E8AFA3;color:white;border:none;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;">
+      ✨ Ir para o Grupo Chocake
+    </button>
+  `;
+  restEl.style.display = 'flex';
+}
+
 
 function _aplicarNavContexto(tipo) {
   // Por enquanto mostra todos os módulos em qualquer contexto.
@@ -19333,9 +19370,7 @@ setInterval(() => { if (FirebaseSync.ready()) FirebaseSync.saveAll(); }, 10000);
 
 
 document.addEventListener('DOMContentLoaded', function() {
-  // Esconde app shell até o usuário selecionar o contexto
-  document.querySelector('.sidebar')?.style.setProperty('display', 'none');
-  document.getElementById('app-content')?.style.setProperty('display', 'none');
+  // (seletor é overlay fixo, não precisa esconder app shell)
   const hoje = new Date();
   const inicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString().slice(0,10);
   const fim    = hoje.toISOString().slice(0,10);
