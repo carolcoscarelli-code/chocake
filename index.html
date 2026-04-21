@@ -5314,8 +5314,8 @@ function _atualizarBadgeLoja() {
   }
 }
 
-function _trocarLoja(novaLoja) {
-  if (_lojaAtiva === novaLoja) return;
+function _trocarLoja(novaLoja, forcar) {
+  if (_lojaAtiva === novaLoja && !forcar) return;
   _lojaAtiva = novaLoja;
   localStorage.setItem('_lojaAtiva', novaLoja);
 
@@ -19172,7 +19172,7 @@ function selecionarContexto(tipo, id) {
 
   // Troca a loja ativa para loja (ou mantém a última para grupo)
   if (tipo === 'loja') {
-    _trocarLoja(id);
+    _trocarLoja(id, true); // forçar recarga mesmo se for a mesma loja
   }
 
   // Esconde tela de seleção
@@ -19207,15 +19207,13 @@ function _voltarSeletor() {
 // RESTRIÇÃO POR CONTEXTO — Área exclusiva do Grupo Chocake
 // ════════════════════════════════════════════════════════════════════════════
 
-const PAGINAS_GRUPO_ONLY = new Set([
-  'fichas','insumos','fornecedores','compras','producao','transferencias',
-  'mkt-calendario','mkt-metricas','mkt-parcerias','mkt-campanhas','mkt-trafego','mkt-legendas',
-  'gerador','sobre'
-]);
+// Páginas exclusivas do Grupo Chocake — por ora sem restrições
+// (o seletor define qual loja é mostrada; todas as páginas são acessíveis em qualquer contexto)
+const PAGINAS_GRUPO_ONLY = new Set([]);
 
 function _checkRestricaoGrupo(pageId) {
-  if (!_contextoAtual) return false;
-  return _contextoAtual.tipo === 'loja' && PAGINAS_GRUPO_ONLY.has(pageId);
+  // Sem restrições por contexto — todas as páginas acessíveis
+  return false;
 }
 
 function _mostrarAreaRestrita(id, btn) {
