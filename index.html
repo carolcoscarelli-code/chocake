@@ -5370,9 +5370,13 @@ function showPage(id, btn) {
     _mostrarAreaRestrita(id, btn);
     return;
   }
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.page').forEach(p => {
+    p.classList.remove('active');
+    p.style.display = ''; // limpa override inline de _mostrarAreaRestrita
+  });
   const pageEl = document.getElementById('page-' + id);
   if (!pageEl) return;
+  pageEl.style.display = ''; // garante que o CSS .page.active vai funcionar
   pageEl.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   if (btn) btn.classList.add('active');
@@ -19172,11 +19176,16 @@ function selecionarContexto(tipo, id) {
 
   // Troca a loja ativa para loja (ou mantém a última para grupo)
   if (tipo === 'loja') {
-    _trocarLoja(id, true); // forçar recarga mesmo se for a mesma loja
+    try {
+      _trocarLoja(id, true); // forçar recarga mesmo se for a mesma loja
+    } catch(e) {
+      console.warn('[Chocake] Erro em _trocarLoja:', e);
+    }
   }
 
-  // Esconde tela de seleção
-  document.getElementById('screen-seletor')?.classList.add('hidden');
+  // Sempre esconde a tela de seleção — mesmo se houve erro acima
+  const selEl = document.getElementById('screen-seletor');
+  if (selEl) { selEl.classList.add('hidden'); selEl.style.display = 'none'; }
 
   // Atualiza badge na topbar
   const badge = document.getElementById('topbar-loja-badge');
