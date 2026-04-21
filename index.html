@@ -5438,6 +5438,7 @@ function showPage(id, btn) {
   if (id === 'transferencias-produtos') renderCadastroProdutosMatriz();
   if (id === 'cardapio') renderCardapio();
   if (id === 'dre') renderDRE();
+  if (id === 'financeiro') _aplicarContextoFinanceiro();
 }
 
 function showTab(id, btn) {
@@ -19282,6 +19283,58 @@ function _mostrarAreaRestrita(id, btn) {
   restEl.style.display = 'flex';
 }
 
+
+
+// ── Filtra módulo Financeiro pelo contexto de loja ────────────────────────
+function _aplicarContextoFinanceiro() {
+  const ctx = _contextoAtual;
+  const isGrupo = !ctx || ctx.tipo === 'grupo';
+  const mapaLojas = {
+    funcionarios: 'Funcionários',
+    viladaserra:  'Vila da Serra',
+    sion:         'Sion'
+  };
+  const lojaAtiva = isGrupo ? null : (mapaLojas[ctx.id] || null);
+
+  // KPI cards — mostra só o da loja ativa (ou todos no grupo)
+  const todosCards = [
+    { loja: 'Funcionários',  id: 'total-fixos-Funcionários' },
+    { loja: 'Vila da Serra', id: 'total-fixos-Vila_da_Serra' },
+    { loja: 'Sion',          id: 'total-fixos-Sion' },
+  ];
+  todosCards.forEach(function(item) {
+    var card = document.getElementById(item.id);
+    if (card) card = card.closest('.kpi-card');
+    if (card) card.style.display = (isGrupo || item.loja === lojaAtiva) ? '' : 'none';
+  });
+  // Card Total Consolidado — só no Grupo
+  var cardTotal = document.getElementById('total-fixos-todas');
+  if (cardTotal) cardTotal = cardTotal.closest('.kpi-card');
+  if (cardTotal) cardTotal.style.display = isGrupo ? '' : 'none';
+
+  // Subtabs — mostra só a tab da loja ativa + Compartilhado
+  document.querySelectorAll('.tab-custo-loja').forEach(function(btn) {
+    var onclick = btn.getAttribute('onclick') || '';
+    var m = onclick.match(/showCustoLoja\('([^']+)'/);
+    if (!m) return;
+    var tabLoja = m[1];
+    if (isGrupo) {
+      btn.style.display = '';
+    } else {
+      btn.style.display = (tabLoja === lojaAtiva || tabLoja === 'Compartilhado') ? '' : 'none';
+    }
+  });
+
+  // Auto-seleciona a tab correta
+  if (!isGrupo && lojaAtiva && typeof showCustoLoja === 'function') {
+    var tabs = Array.from(document.querySelectorAll('.tab-custo-loja'));
+    var activeTab = tabs.find(function(b) {
+      var m = (b.getAttribute('onclick') || '').match(/showCustoLoja\('([^']+)'/);
+      return m && m[1] === lojaAtiva;
+    });
+    if (activeTab) showCustoLoja(lojaAtiva, activeTab);
+  }
+}
 
 function _aplicarNavContexto(tipo) {
   // Por enquanto mostra todos os módulos em qualquer contexto.
