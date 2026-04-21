@@ -19146,7 +19146,18 @@ const _CTX_CONFIG = {
 };
 
 function mostrarSeletorContexto() {
-  // Mostra a tela de seleção (overlay sobre o app)
+  // Tenta restaurar contexto salvo — se existir, vai direto pra app sem mostrar seletor
+  const saved = localStorage.getItem('_contextoAtual');
+  if (saved) {
+    try {
+      const { tipo, id } = JSON.parse(saved);
+      if (tipo && id && _CTX_CONFIG[id]) {
+        selecionarContexto(tipo, id);
+        return;
+      }
+    } catch(e) {}
+  }
+  // Se não tem contexto salvo, mostra tela de seleção
   document.getElementById('screen-seletor')?.classList.remove('hidden');
 }
 
@@ -19155,6 +19166,9 @@ function selecionarContexto(tipo, id) {
   if (!cfg) return;
 
   _contextoAtual = { tipo, id, ...cfg };
+
+  // Persiste o contexto no localStorage para sobreviver ao reload
+  localStorage.setItem('_contextoAtual', JSON.stringify({ tipo, id }));
 
   // Troca a loja ativa para loja (ou mantém a última para grupo)
   if (tipo === 'loja') {
@@ -19182,7 +19196,10 @@ function selecionarContexto(tipo, id) {
 }
 
 function _voltarSeletor() {
-  mostrarSeletorContexto();
+  // Limpa contexto salvo para forçar a seleção
+  localStorage.removeItem('_contextoAtual');
+  _contextoAtual = null;
+  document.getElementById('screen-seletor')?.classList.remove('hidden');
 }
 
 
