@@ -5101,6 +5101,16 @@ let CARDAPIO = JSON.parse(localStorage.getItem(_lKey('cardapio')) || '[]');
 
 function salvarCardapio() {
   try { localStorage.setItem(_lKey('cardapio'), JSON.stringify(CARDAPIO)); } catch(e) {}
+  // Sincroniza o cardápio com o Firestore no formato que o PDV lê:
+  //   chocake_sync/_L_{lojaAtiva}_cardapio
+  try {
+    if (typeof _fbDb !== 'undefined' && _fbDb && _fbAuth && _fbAuth.currentUser) {
+      const docId = `_L_${_lojaAtiva}_cardapio`;
+      _fbDb.collection('chocake_sync').doc(docId)
+        .set({ v: JSON.stringify(CARDAPIO), t: new Date().toISOString() })
+        .catch(e => console.warn('sync cardápio → PDV falhou:', e && e.message));
+    }
+  } catch(e) { console.warn('salvarCardapio sync:', e && e.message); }
 }
 
 function _precoCardapio(item, semOverride = false) {
