@@ -1822,7 +1822,8 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
           <div style="display:flex;gap:8px">
             <button class="btn btn-ghost" onclick="abrirFichaParaEditar(fichaAberta?.id)" style="flex-shrink:0">✏️ Editar</button>
             <button class="btn btn-ghost" onclick="duplicarFicha(fichaAberta?.id)" style="flex-shrink:0" title="Criar uma cópia desta ficha">📋 Duplicar</button>
-            <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta)" style="flex-shrink:0">🖨️ Imprimir</button>
+            <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta, false)" style="flex-shrink:0" title="Imprimir ficha completa">🖨️ Imprimir</button>
+            <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta, true)" style="flex-shrink:0" title="Imprimir em formato reduzido (1 página)">📄 1 página</button>
             <button class="btn btn-ghost" onclick="fecharDetalhe()" style="flex-shrink:0">✕ Fechar</button>
           </div>
         </div>
@@ -4170,7 +4171,8 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <div style="display:flex;gap:8px;align-items:center">
       <span id="edit-autosave-status" style="font-size:12px;color:var(--text-light);margin-right:4px"></span>
       <button class="btn btn-ghost" onclick="duplicarFicha(fichaAberta?.id)" title="Criar uma cópia desta ficha">📋 Duplicar</button>
-      <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta)">🖨️ Imprimir</button>
+      <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta, false)" title="Imprimir ficha completa">🖨️ Imprimir</button>
+      <button class="btn btn-ghost" onclick="imprimirFicha(fichaAberta, true)" title="Imprimir em formato reduzido (1 página)">📄 1 página</button>
       <button class="btn btn-primary" onclick="salvarEdicaoFicha()">💾 Salvar</button>
     </div>
   </div>
@@ -9165,8 +9167,23 @@ function removerCategoria(idx) {
 
 
 // ========== IMPRIMIR FICHA ==========
-function imprimirFicha(f) {
+function imprimirFicha(f, compact) {
   if (!f) return;
+  compact = compact === true; // modo compacto 1 página quando true
+  // Tamanhos condicionais (compacto vs normal)
+  const S = compact ? {
+    pad: '10px 14px', maxW: '720px', fsNome: '20px', fsMarca: '10px', fsSub: '9px',
+    fsBar: '4px', barW: '40px', fotoSize: '90px', infoPad: '5px 8px', infoFs: '11px', infoLbl: '8px',
+    tdPad: '3px 8px', tdFs: '10.5px', stepSize: '16px', stepFs: '9.5px', prepFs: '10.5px',
+    headerMb: '12px', sectionGap: '10px', tabBarPad: '5px 10px', tabBarFs: '9px',
+    prepPad: '5px 8px', rodapeMt: '10px', rodapeFs: '8.5px', infoMb: '10px'
+  } : {
+    pad: '32px 36px', maxW: '780px', fsNome: '28px', fsMarca: '11px', fsSub: '11px',
+    fsBar: '12px', barW: '56px', fotoSize: '180px', infoPad: '8px 10px', infoFs: '13px', infoLbl: '9px',
+    tdPad: '7px 12px', tdFs: '12px', stepSize: '22px', stepFs: '11px', prepFs: '12px',
+    headerMb: '24px', sectionGap: '20px', tabBarPad: '8px 12px', tabBarFs: '10px',
+    prepPad: '10px 12px', rodapeMt: '28px', rodapeFs: '10px', infoMb: '16px'
+  };
   const nomeLoja = localStorage.getItem('nomeLoja') || 'Chocake';
   const anoAtual = new Date().getFullYear();
 
@@ -9180,37 +9197,37 @@ function imprimirFicha(f) {
           : i.un || '—';
         const bg = idx % 2 === 0 ? '#ffffff' : '#f9f4ef';
         return `<tr style="background:${bg}">
-          <td style="padding:7px 12px;font-size:12px;color:#3a2010;border-bottom:1px solid #ede0d4">${i.nome}</td>
-          <td style="padding:7px 12px;font-size:12px;color:#7a4a2a;font-weight:600;text-align:right;border-bottom:1px solid #ede0d4;white-space:nowrap">${qtdStr}</td>
+          <td style="padding:${S.tdPad};font-size:${S.tdFs};color:#3a2010;border-bottom:1px solid #ede0d4">${i.nome}</td>
+          <td style="padding:${S.tdPad};font-size:${S.tdFs};color:#7a4a2a;font-weight:600;text-align:right;border-bottom:1px solid #ede0d4;white-space:nowrap">${qtdStr}</td>
         </tr>`;
       }).join('')
-    : `<tr><td colspan="2" style="padding:10px 12px;font-style:italic;color:#9a7050;font-size:12px">Ingredientes não cadastrados</td></tr>`;
+    : `<tr><td colspan="2" style="padding:${S.tdPad};font-style:italic;color:#9a7050;font-size:${S.tdFs}">Ingredientes não cadastrados</td></tr>`;
 
   // ── Modo de preparo ──
   const prepRows = f.preparo.length > 0
     ? f.preparo.map((p, i) => `
-        <div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid #ede0d4;align-items:flex-start">
-          <span style="flex-shrink:0;width:22px;height:22px;background:#5c3317;color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</span>
-          <span style="font-size:12px;color:#3a2010;line-height:1.5">${p}</span>
+        <div style="display:flex;gap:${compact?'6px':'10px'};padding:${compact?'3px':'7px'} 0;border-bottom:1px solid #ede0d4;align-items:flex-start">
+          <span style="flex-shrink:0;width:${S.stepSize};height:${S.stepSize};background:#5c3317;color:#fff;border-radius:50%;font-size:${S.stepFs};font-weight:700;display:flex;align-items:center;justify-content:center">${i+1}</span>
+          <span style="font-size:${S.prepFs};color:#3a2010;line-height:1.45">${p}</span>
         </div>`).join('')
-    : '<p style="color:#9a7050;font-style:italic;font-size:12px;margin:8px 0">Modo de preparo não cadastrado.</p>';
+    : `<p style="color:#9a7050;font-style:italic;font-size:${S.prepFs};margin:8px 0">Modo de preparo não cadastrado.</p>`;
 
   // ── Infos de produção (sem valores financeiros) ──
   const infoBoxes = `
-    <div style="display:flex;gap:8px;margin-bottom:16px">
-      ${f.rendimento ? `<div style="flex:1;border:1.5px solid #d4b8a0;border-radius:6px;padding:8px 10px">
-        <div style="font-size:9px;font-weight:700;color:#9a7050;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Rendimento</div>
-        <div style="font-size:13px;font-weight:700;color:#3a2010">${f.rendimento}</div>
+    <div style="display:flex;gap:8px;margin-bottom:${S.infoMb}">
+      ${f.rendimento ? `<div style="flex:1;border:1.5px solid #d4b8a0;border-radius:6px;padding:${S.infoPad}">
+        <div style="font-size:${S.infoLbl};font-weight:700;color:#9a7050;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Rendimento</div>
+        <div style="font-size:${S.infoFs};font-weight:700;color:#3a2010">${f.rendimento}</div>
       </div>` : ''}
-      ${f.forno ? `<div style="flex:1;border:1.5px solid #d4b8a0;border-radius:6px;padding:8px 10px">
-        <div style="font-size:9px;font-weight:700;color:#9a7050;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px">Temperatura</div>
-        <div style="font-size:13px;font-weight:700;color:#3a2010">${f.forno}</div>
+      ${f.forno ? `<div style="flex:1;border:1.5px solid #d4b8a0;border-radius:6px;padding:${S.infoPad}">
+        <div style="font-size:${S.infoLbl};font-weight:700;color:#9a7050;text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px">Temperatura</div>
+        <div style="font-size:${S.infoFs};font-weight:700;color:#3a2010">${f.forno}</div>
       </div>` : ''}
     </div>`;
 
   // ── Foto ──
   const fotoHtml = (f.foto && !_isReceitaBase(f.categoria))
-    ? `<img src="${f.foto}" style="width:180px;height:180px;object-fit:cover;border-radius:8px;border:2px solid #d4b8a0;flex-shrink:0">`
+    ? `<img src="${f.foto}" style="width:${S.fotoSize};height:${S.fotoSize};object-fit:cover;border-radius:8px;border:2px solid #d4b8a0;flex-shrink:0">`
     : '';
 
   // ── Cria / reutiliza div de impressão ──
@@ -9221,16 +9238,27 @@ function imprimirFicha(f) {
     document.body.appendChild(printDiv);
   }
 
+  // CSS adicional para impressão (margens de página + tentar manter em 1 folha)
+  let printStyle = document.getElementById('print-style-ficha');
+  if (!printStyle) {
+    printStyle = document.createElement('style');
+    printStyle.id = 'print-style-ficha';
+    document.head.appendChild(printStyle);
+  }
+  printStyle.textContent = compact
+    ? '@page { size: A4 portrait; margin: 8mm 10mm; } @media print { #print-area { page-break-inside: avoid; } }'
+    : '@page { size: A4 portrait; margin: 15mm; }';
+
   printDiv.innerHTML = `
-  <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:780px;margin:0 auto;padding:32px 36px;color:#3a2010;background:#fff">
+  <div style="font-family:'Helvetica Neue',Arial,sans-serif;max-width:${S.maxW};margin:0 auto;padding:${S.pad};color:#3a2010;background:#fff">
 
     <!-- CABEÇALHO -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px;gap:20px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:${S.headerMb};gap:${compact?'12px':'20px'}">
       <div style="flex:1">
-        <div style="font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9a7050;margin-bottom:4px">${nomeLoja}</div>
-        <div style="font-size:28px;font-weight:800;color:#3a2010;line-height:1.15;margin-bottom:6px;text-transform:uppercase;letter-spacing:.01em">${f.nome}</div>
-        <div style="font-size:11px;color:#9a7050;letter-spacing:.06em;text-transform:uppercase">Ficha Técnica · ${f.categoria}${f.forno ? ' · ' + f.forno : ''}</div>
-        <div style="height:3px;width:56px;background:#5c3317;border-radius:2px;margin-top:12px"></div>
+        <div style="font-size:${S.fsMarca};font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9a7050;margin-bottom:3px">${nomeLoja}</div>
+        <div style="font-size:${S.fsNome};font-weight:800;color:#3a2010;line-height:1.15;margin-bottom:${compact?'3px':'6px'};text-transform:uppercase;letter-spacing:.01em">${f.nome}</div>
+        <div style="font-size:${S.fsSub};color:#9a7050;letter-spacing:.06em;text-transform:uppercase">Ficha Técnica · ${f.categoria}${f.forno ? ' · ' + f.forno : ''}</div>
+        <div style="height:${compact?'2px':'3px'};width:${S.barW};background:#5c3317;border-radius:2px;margin-top:${S.fsBar}"></div>
       </div>
       ${fotoHtml}
     </div>
@@ -9239,16 +9267,16 @@ function imprimirFicha(f) {
     ${(f.rendimento || f.forno) ? infoBoxes : ''}
 
     <!-- INGREDIENTES + PREPARO lado a lado -->
-    <div style="display:flex;gap:20px;align-items:flex-start">
+    <div style="display:flex;gap:${S.sectionGap};align-items:flex-start">
 
       <!-- Ingredientes -->
       <div style="flex:1">
-        <div style="background:#5c3317;color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:4px 4px 0 0">Ingredientes</div>
+        <div style="background:#5c3317;color:#fff;font-size:${S.tabBarFs};font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:${S.tabBarPad};border-radius:4px 4px 0 0">Ingredientes</div>
         <table style="width:100%;border-collapse:collapse;border:1px solid #ede0d4;border-top:none">
           <thead>
             <tr style="background:#f0e6dc">
-              <th style="padding:6px 12px;font-size:10px;font-weight:700;color:#7a4a2a;text-align:left;letter-spacing:.04em;text-transform:uppercase">Ingrediente</th>
-              <th style="padding:6px 12px;font-size:10px;font-weight:700;color:#7a4a2a;text-align:right;letter-spacing:.04em;text-transform:uppercase">Qtd</th>
+              <th style="padding:${compact?'3px 8px':'6px 12px'};font-size:${S.tabBarFs};font-weight:700;color:#7a4a2a;text-align:left;letter-spacing:.04em;text-transform:uppercase">Ingrediente</th>
+              <th style="padding:${compact?'3px 8px':'6px 12px'};font-size:${S.tabBarFs};font-weight:700;color:#7a4a2a;text-align:right;letter-spacing:.04em;text-transform:uppercase">Qtd</th>
             </tr>
           </thead>
           <tbody>${ingRows}</tbody>
@@ -9257,17 +9285,17 @@ function imprimirFicha(f) {
 
       <!-- Modo de preparo -->
       ${f.preparo.length > 0 ? `<div style="flex:1">
-        <div style="background:#5c3317;color:#fff;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:8px 12px;border-radius:4px 4px 0 0">Modo de Preparo</div>
-        <div style="border:1px solid #ede0d4;border-top:none;padding:10px 12px;border-radius:0 0 4px 4px">
+        <div style="background:#5c3317;color:#fff;font-size:${S.tabBarFs};font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:${S.tabBarPad};border-radius:4px 4px 0 0">Modo de Preparo</div>
+        <div style="border:1px solid #ede0d4;border-top:none;padding:${S.prepPad};border-radius:0 0 4px 4px">
           ${prepRows}
         </div>
       </div>` : ''}
     </div>
 
     <!-- RODAPÉ -->
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:28px;padding-top:12px;border-top:1px solid #ede0d4">
-      <div style="font-size:10px;color:#9a7050">${nomeLoja} — Confeitaria Artesanal &nbsp;·&nbsp; Uso interno</div>
-      <div style="font-size:10px;color:#9a7050">Impresso em ${new Date().toLocaleDateString('pt-BR')} · ${anoAtual}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:${S.rodapeMt};padding-top:${compact?'6px':'12px'};border-top:1px solid #ede0d4">
+      <div style="font-size:${S.rodapeFs};color:#9a7050">${nomeLoja} — Confeitaria Artesanal &nbsp;·&nbsp; Uso interno</div>
+      <div style="font-size:${S.rodapeFs};color:#9a7050">Impresso em ${new Date().toLocaleDateString('pt-BR')} · ${anoAtual}</div>
     </div>
   </div>`;
 
