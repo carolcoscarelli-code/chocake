@@ -5379,6 +5379,18 @@ function _trocarLoja(novaLoja, forcar) {
   CARDAPIO         = JSON.parse(localStorage.getItem(_lKey('cardapio'))          || '[]');
   vendas           = JSON.parse(AppStorage.getItem('vendas') || '[]');
 
+  // Auto-sync retroativo do cardápio com o Firestore (para o PDV standalone)
+  // Se há cardápio local e o Firebase está pronto, garante que o doc no Firestore
+  // está atualizado. Se o doc não existe ainda, cria; se existe, apenas sobrescreve.
+  if (CARDAPIO.length && typeof _fbDb !== 'undefined' && _fbDb && _fbAuth && _fbAuth.currentUser) {
+    try {
+      _fbDb.collection('chocake_sync').doc(`_L_${novaLoja}_cardapio`)
+        .set({ v: JSON.stringify(CARDAPIO), t: new Date().toISOString() })
+        .then(() => console.log(`☁️ Cardápio sincronizado com PDV (${novaLoja}): ${CARDAPIO.length} itens`))
+        .catch(e => console.warn('sync cardápio → PDV falhou:', e && e.message));
+    } catch(e) { console.warn('auto-sync cardápio:', e && e.message); }
+  }
+
   // Recarrega processos da loja
   REGISTROS_TEMP = JSON.parse(localStorage.getItem(_lKey('registrosTemp')) || '[]');
   PEDIDOS_REP    = JSON.parse(localStorage.getItem(_lKey('pedidosRep'))    || '[]');
