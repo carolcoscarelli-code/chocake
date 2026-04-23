@@ -1835,6 +1835,10 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
           <div>
             <div class="section-title" style="margin-bottom:14px">👩‍🍳 Modo de Preparo</div>
             <div id="det-preparo" style="font-size:14px;color:var(--marrom-mid);line-height:1.8;font-weight:500"></div>
+            <div id="det-utensilios-wrap" style="margin-top:20px;display:none">
+              <div class="section-title" style="margin-bottom:12px">🧰 Utensílios Necessários</div>
+              <div id="det-utensilios"></div>
+            </div>
             <div style="margin-top:20px">
               <div class="section-title" style="margin-bottom:12px">📊 Resumo de Custo</div>
               <div id="det-custo-resumo"></div>
@@ -4252,6 +4256,12 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
       <div class="form-group">
         <label>Modo de Preparo <span style="font-weight:400;color:var(--text-light)">(uma etapa por linha)</span></label>
         <textarea id="edit-preparo" rows="5" placeholder="Passo 1: ...&#10;Passo 2: ..." style="resize:vertical" oninput="_agendarAutoSave()"></textarea>
+      </div>
+
+      <!-- Utensílios -->
+      <div class="form-group">
+        <label>🧰 Utensílios Necessários <span style="font-weight:400;color:var(--text-light)">(um por linha)</span></label>
+        <textarea id="edit-utensilios" rows="4" placeholder="Ex:&#10;Batedeira planetária&#10;Forma de 20cm&#10;Espátula de silicone&#10;Balança de precisão" style="resize:vertical" oninput="_agendarAutoSave()"></textarea>
       </div>
 
       <!-- Foto do produto -->
@@ -8250,6 +8260,21 @@ function _abrirFichaDetalheInline(id) {
     ingEl.innerHTML = '<p style="color:var(--text-light);font-size:13px">Ingredientes não cadastrados nesta ficha.</p>';
   }
 
+  // Utensílios
+  const utEl = document.getElementById('det-utensilios');
+  const utWrap = document.getElementById('det-utensilios-wrap');
+  const utensilios = f.utensilios || [];
+  if (utensilios.length > 0) {
+    if (utWrap) utWrap.style.display = '';
+    if (utEl) utEl.innerHTML = utensilios.map(u => `
+      <div style="display:flex;gap:10px;align-items:center;padding:7px 10px;background:var(--bege-light);border-radius:8px;margin-bottom:6px">
+        <span style="font-size:16px">🧰</span>
+        <span style="font-size:13.5px;color:var(--marrom-mid);font-weight:500">${u}</span>
+      </div>`).join('');
+  } else {
+    if (utWrap) utWrap.style.display = 'none';
+  }
+
   // Preparo
   const prepEl = document.getElementById('det-preparo');
   if (f.preparo.length > 0) {
@@ -8509,6 +8534,7 @@ function abrirFichaParaEditar(id) {
   document.getElementById('edit-tempo').value     = f.tempo || f.forno || '';
   document.getElementById('edit-preco').value     = f.preco > 0 ? f.preco : '';
   document.getElementById('edit-preparo').value   = (f.preparo || []).join('\n');
+  if (document.getElementById('edit-utensilios')) document.getElementById('edit-utensilios').value = (f.utensilios || []).join('\n');
 
   // Categoria
   const catSel = document.getElementById('edit-cat');
@@ -8736,6 +8762,7 @@ async function salvarEdicaoFicha() {
   fichaAberta.preco       = parseFloat(document.getElementById('edit-preco')?.value || 0) || 0;
   fichaAberta.ingredientes    = ingredientesEditForm.filter(i => i.nome?.trim());
   fichaAberta.preparo         = (document.getElementById('edit-preparo')?.value || '').split('\n').filter(p => p.trim());
+  fichaAberta.utensilios      = (document.getElementById('edit-utensilios')?.value || '').split('\n').filter(p => p.trim());
   fichaAberta.custo_calculado = 0;
   fichaAberta._dirty          = true;
   if (!_isReceitaBase(fichaAberta.categoria)) fichaAberta.foto = _fotoEditTemp;
@@ -8799,6 +8826,7 @@ function _agendarAutoSave() {
     fichaAberta.preco      = parseFloat(document.getElementById('edit-preco')?.value || 0) || 0;
     fichaAberta.ingredientes    = ingredientesEditForm.filter(i => i.nome?.trim());
     fichaAberta.preparo         = (document.getElementById('edit-preparo')?.value || '').split('\n').filter(p => p.trim());
+    fichaAberta.utensilios      = (document.getElementById('edit-utensilios')?.value || '').split('\n').filter(p => p.trim());
     fichaAberta.custo_calculado = 0;
     fichaAberta._dirty          = true;
     if (!_isReceitaBase(fichaAberta.categoria)) fichaAberta.foto = _fotoEditTemp;
@@ -9203,6 +9231,17 @@ function imprimirFicha(f, compact) {
       }).join('')
     : `<tr><td colspan="2" style="padding:${S.tdPad};font-style:italic;color:#9a7050;font-size:${S.tdFs}">Ingredientes não cadastrados</td></tr>`;
 
+  // ── Utensílios ──
+  const utensilios = f.utensilios || [];
+  const utHtml = utensilios.length > 0
+    ? `<div style="margin-top:${compact ? '8px' : '14px'}">
+        <div style="background:#5c3317;color:#fff;font-size:${S.tabBarFs};font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:${S.tabBarPad};border-radius:4px 4px 0 0">Utensílios</div>
+        <div style="border:1px solid #ede0d4;border-top:none;padding:${compact?'5px 8px':'8px 12px'};border-radius:0 0 4px 4px;display:flex;flex-wrap:wrap;gap:${compact?'4px':'6px'}">
+          ${utensilios.map(u => `<span style="font-size:${S.prepFs};color:#3a2010;background:#f9f4ef;border:1px solid #ede0d4;padding:${compact?'2px 7px':'3px 9px'};border-radius:999px">🧰 ${u}</span>`).join('')}
+        </div>
+      </div>`
+    : '';
+
   // ── Modo de preparo ──
   const prepRows = f.preparo.length > 0
     ? f.preparo.map((p, i) => `
@@ -9291,6 +9330,9 @@ function imprimirFicha(f, compact) {
         </div>
       </div>` : ''}
     </div>
+
+    <!-- UTENSÍLIOS -->
+    ${utHtml}
 
     <!-- RODAPÉ -->
     <div style="display:flex;justify-content:space-between;align-items:center;margin-top:${S.rodapeMt};padding-top:${compact?'6px':'12px'};border-top:1px solid #ede0d4">
