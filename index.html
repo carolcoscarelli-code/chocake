@@ -1586,8 +1586,7 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
         <div style="font-size:13px;color:var(--marrom);font-weight:700">📐 Como é calculado?</div>
         <div style="font-size:12.5px;color:var(--text-light);flex:1">
           <strong style="color:var(--marrom)">PE (R$)</strong> = Custos Fixos ÷ Margem de Contribuição &nbsp;|&nbsp;
-          <strong style="color:var(--marrom)">Margem de Contribuição</strong> = 1 − (Custos Variáveis ÷ Faturamento) &nbsp;|&nbsp;
-          <strong style="color:var(--marrom)">PE (unid.)</strong> = PE (R$) ÷ Ticket Médio
+          <strong style="color:var(--marrom)">Margem de Contribuição</strong> = 1 − (Custos Variáveis ÷ Faturamento)
         </div>
       </div>
       <div class="grid grid-3" id="pe-cards"></div>
@@ -1605,7 +1604,6 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
                 <th>Custo Variável %</th>
                 <th>Margem de Contrib.</th>
                 <th>PE em R$</th>
-                <th>PE em Unidades</th>
                 <th>Faturamento Atual</th>
                 <th>Status</th>
               </tr>
@@ -20181,7 +20179,7 @@ function renderPECards() {
       <div style="background:linear-gradient(135deg,${acimaPE?'#EBF7F1':'#FBF3E0'},${acimaPE?'#F0FAF4':'#FDF6EC'});border-radius:12px;padding:16px;margin-bottom:18px;text-align:center">
         <div style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px">Precisa Faturar</div>
         <div style="font-family:'Cormorant Garamond',serif;font-size:36px;font-weight:700;color:${acimaPE?'var(--success)':'var(--warning)'};line-height:1">${fmt(pe)}</div>
-        <div style="font-size:12px;color:var(--text-light);margin-top:4px">${peUn.toFixed(0)} pedidos com ticket médio de ${fmt(cfg.ticketMedio)}</div>
+        <div style="font-size:12px;color:var(--text-light);margin-top:4px">Faturamento necessário para cobrir custos</div>
       </div>
       <div style="margin-bottom:12px">
         <div style="display:flex;justify-content:space-between;font-size:11.5px;font-weight:600;color:var(--text-light);margin-bottom:7px">
@@ -20213,7 +20211,6 @@ function renderPETabela() {
       <td>${cfg.custoVarPct.toFixed(1)}%</td>
       <td><strong>${(imc * 100).toFixed(1)}%</strong></td>
       <td><strong style="color:var(--marrom)">${fmt(pe)}</strong></td>
-      <td>${Math.ceil(peUn)} pedidos</td>
       <td>${fmt(fatRef)}</td>
       <td><span class="badge ${acimaPE ? 'badge-green' : 'badge-red'}">${acimaPE ? '✅ No azul' : '⚠️ Atenção'}</span></td>
     </tr>`;
@@ -20284,7 +20281,7 @@ function renderPELoja(loja) {
   const corCobertura = acimaPE ? 'green' : atingido >= 70 ? 'gold' : 'red';
 
   document.getElementById('pe-kpis').innerHTML = `
-    <div class="kpi-card rose"><span class="kpi-icon">🎯</span><div class="kpi-label">PE Mensal (R$)</div><div class="kpi-value">${fmt(pe)}</div><div class="kpi-change" style="color:var(--text-light)">${peUn.toFixed(0)} pedidos</div></div>
+    <div class="kpi-card rose"><span class="kpi-icon">🎯</span><div class="kpi-label">PE Mensal (R$)</div><div class="kpi-value">${fmt(pe)}</div><div class="kpi-change" style="color:var(--text-light)">Faturamento necessário</div></div>
     <div class="kpi-card red"><span class="kpi-icon">🔒</span><div class="kpi-label">Custos Fixos</div><div class="kpi-value">${fmt(custosFixosAuto)}</div><div class="kpi-change" style="color:var(--text-light)">Mensal</div></div>
     <div class="kpi-card ${corCobertura}"><span class="kpi-icon">${acimaPE ? '✅' : '⚠️'}</span><div class="kpi-label">Cobertura do mês</div><div class="kpi-value">${atingido.toFixed(0)}%</div><div class="kpi-change ${acimaPE?'up':'down'}">${fmt(fatRef)} faturados</div></div>
     <div class="kpi-card gold"><span class="kpi-icon">📈</span><div class="kpi-label">Margem Contribuição</div><div class="kpi-value">${(imc*100).toFixed(1)}%</div><div class="kpi-change" style="color:var(--text-light)">(1 − CV%)</div></div>
@@ -20303,7 +20300,7 @@ function renderPELoja(loja) {
     <div style="background:linear-gradient(135deg,${acimaPE?'#EBF7F1':'#FBF3E0'},${acimaPE?'#F0FAF4':'#FDF6EC'});border-radius:14px;padding:24px;margin-bottom:18px;text-align:center">
       <div style="font-size:12px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.07em;margin-bottom:6px">Ponto de Equilíbrio</div>
       <div style="font-family:'Cormorant Garamond',serif;font-size:48px;font-weight:700;color:${acimaPE?'var(--success)':'var(--warning)'};line-height:1">${fmt(pe)}</div>
-      <div style="font-size:13px;color:var(--text-light);margin-top:6px"><strong>${Math.ceil(peUn)}</strong> pedidos × ticket médio de <strong>${fmt(cfg.ticketMedio)}</strong></div>
+      <div style="font-size:13px;color:var(--text-light);margin-top:6px">que sua loja precisa faturar para cobrir <strong>todos os custos</strong> deste mês</div>
     </div>
     <div>
       <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text-light);margin-bottom:8px">
@@ -20417,7 +20414,7 @@ function renderPELoja(loja) {
       <div style="background:var(--rosa-pale);padding:14px;border-radius:10px;text-align:center">
         <div style="font-size:11px;color:var(--text-light);font-weight:700;text-transform:uppercase">Por Dia</div>
         <div style="font-size:18px;font-weight:800;color:var(--marrom);margin-top:3px">${fmt(fatPorDia)}</div>
-        <div style="font-size:11px;color:var(--text-light);margin-top:2px">≈ ${Math.ceil(pedidosPorDia)} pedidos</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px">a cada dia restante</div>
       </div>
       <div style="background:var(--rosa-pale);padding:14px;border-radius:10px;text-align:center">
         <div style="font-size:11px;color:var(--text-light);font-weight:700;text-transform:uppercase">Por Hora</div>
@@ -20433,16 +20430,11 @@ function renderPELoja(loja) {
     <div class="section-header" style="margin-bottom:12px">
       <div class="section-title">⚙️ Parâmetros desta loja</div>
     </div>
-    <div class="grid grid-3" style="gap:12px">
+    <div class="grid grid-2" style="gap:12px">
       <div class="form-group">
         <label>Custo Variável (%)</label>
         <input type="number" value="${cfg.custoVarPct}" min="0" max="99" step="0.1" oninput="atualizarPE('${loja}','custoVarPct',this.value)">
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Total de todos os custos variáveis sobre faturamento.</div>
-      </div>
-      <div class="form-group">
-        <label>Ticket Médio (R$)</label>
-        <input type="number" value="${cfg.ticketMedio}" min="1" step="1" oninput="atualizarPE('${loja}','ticketMedio',this.value)">
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Valor médio por pedido.</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Total de todos os custos variáveis sobre faturamento (CMV + impostos + taxas).</div>
       </div>
       <div class="form-group">
         <label>Faturamento Referência (R$)</label>
@@ -20458,7 +20450,6 @@ function renderPESimulador() {
   if (!loja) return;
   const cfg  = PE_CONFIG[loja];
   const { custosFixosAuto, pe: peAtual } = calcPE(loja);
-  const novoTicket = cfg.ticketMedio * (1 + _peSim.deltaTicket / 100);
   const novoCV     = Math.max(cfg.custoVarPct + _peSim.deltaCV, 0);
   const novoCF     = custosFixosAuto * (1 + _peSim.deltaCF / 100);
   const novaIMC    = 1 - (novoCV / 100);
@@ -20474,15 +20465,7 @@ function renderPESimulador() {
       <button class="btn btn-ghost btn-sm" onclick="resetSimulador()">↺ Zerar</button>
     </div>
     <div style="font-size:12px;color:var(--text-light);margin-bottom:16px">Arraste as barras para ver o novo PE em tempo real.</div>
-    <div class="grid grid-3" style="gap:14px;margin-bottom:18px">
-      <div>
-        <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-          <label style="font-size:12px;color:var(--marrom);font-weight:600">💵 Ticket Médio</label>
-          <strong style="color:${_peSim.deltaTicket >= 0 ? 'var(--success)' : 'var(--danger)'};font-size:13px">${_peSim.deltaTicket >= 0 ? '+' : ''}${_peSim.deltaTicket}%</strong>
-        </div>
-        <input type="range" min="-30" max="50" step="1" value="${_peSim.deltaTicket}" oninput="_peSim.deltaTicket=parseFloat(this.value);renderPESimulador()" style="width:100%">
-        <div style="font-size:11px;color:var(--text-light);margin-top:4px">Novo: ${fmt(cfg.ticketMedio*(1+_peSim.deltaTicket/100))}</div>
-      </div>
+    <div class="grid grid-2" style="gap:14px;margin-bottom:18px">
       <div>
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <label style="font-size:12px;color:var(--marrom);font-weight:600">📉 Custo Variável</label>
@@ -20504,7 +20487,7 @@ function renderPESimulador() {
       <div style="background:var(--bege-light);padding:16px;border-radius:10px;text-align:center">
         <div style="font-size:11px;color:var(--text-light);font-weight:700;text-transform:uppercase">PE Atual</div>
         <div style="font-size:24px;font-weight:800;color:var(--marrom);margin-top:4px;font-family:'Cormorant Garamond',serif">${fmt(peAtual)}</div>
-        <div style="font-size:11px;color:var(--text-light);margin-top:2px">${Math.ceil(cfg.ticketMedio > 0 ? peAtual/cfg.ticketMedio : 0)} pedidos</div>
+        <div style="font-size:11px;color:var(--text-light);margin-top:2px">Cenário base</div>
       </div>
       <div style="background:linear-gradient(135deg,${delta<=0?'#EBF7F1':'#FAEAEA'},${delta<=0?'#F0FAF4':'#FDF0F0'});padding:16px;border-radius:10px;text-align:center;border:2px solid ${cor}">
         <div style="font-size:11px;color:var(--text-light);font-weight:700;text-transform:uppercase">PE Simulado</div>
