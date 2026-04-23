@@ -1,0 +1,17 @@
+{
+  "name": "Chocake PDV",
+  "short_name": "Chocake PDV",
+  "description": "Ponto de venda e encomendas — Chocake",
+  "lang": "pt-BR",
+  "start_url": "./pdv.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#F9CAC2",
+  "theme_color": "#F9CAC2",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
