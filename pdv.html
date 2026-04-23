@@ -242,6 +242,45 @@
 </div>
 
 <!-- ════════════════════
+     TELA 2.5: TIPO DE OPERAÇÃO (Venda Loja / Encomenda)
+════════════════════ -->
+<div class="screen hidden" id="screen-tipo">
+  <div class="loja-header">
+    <div>
+      <div class="loja-header-title" id="tipo-header-title">O que você vai fazer?</div>
+      <div style="font-size:12px;color:var(--cinza)" id="tipo-loja-nome"></div>
+    </div>
+    <button class="btn btn-ghost btn-sm" onclick="voltarParaLojas()">← Trocar loja</button>
+  </div>
+  <div class="loja-cards">
+    <div class="loja-card" onclick="escolherTipo('venda')"
+         style="border-color:transparent"
+         onpointerdown="this.style.borderColor='#6BAF84'"
+         onpointerup="this.style.borderColor='transparent'"
+         onpointercancel="this.style.borderColor='transparent'">
+      <div class="loja-card-emoji">🛒</div>
+      <div class="loja-card-info">
+        <div class="loja-card-nome">Venda Loja</div>
+        <div class="loja-card-sub">Venda imediata no balcão</div>
+      </div>
+      <div class="loja-card-arrow" style="color:#6BAF84">→</div>
+    </div>
+    <div class="loja-card" onclick="escolherTipo('encomenda')"
+         style="border-color:transparent"
+         onpointerdown="this.style.borderColor='#E85D75'"
+         onpointerup="this.style.borderColor='transparent'"
+         onpointercancel="this.style.borderColor='transparent'">
+      <div class="loja-card-emoji">📦</div>
+      <div class="loja-card-info">
+        <div class="loja-card-nome">Encomenda</div>
+        <div class="loja-card-sub">Pedido para entrega / retirada futura</div>
+      </div>
+      <div class="loja-card-arrow" style="color:#E85D75">→</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════
      TELA 3: PDV CAIXA
 ════════════════════ -->
 <div class="screen hidden" id="screen-pdv">
@@ -333,6 +372,26 @@
         <button class="btn btn-ghost checkout-cliente-btn" id="btn-buscar-cliente" onclick="abrirBuscaCliente()">👤 Buscar</button>
       </div>
     </div>
+
+    <!-- Campos de Encomenda (só aparecem quando tipo === 'encomenda') -->
+    <div class="checkout-section" id="checkout-sec-encomenda" style="display:none">
+      <div class="checkout-section-title">📦 Dados da Encomenda</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+        <div>
+          <label style="font-size:12px;color:var(--cinza);font-weight:600;display:block;margin-bottom:4px">Data de entrega</label>
+          <input type="date" id="enc-pdv-data"
+            style="width:100%;padding:10px;border:2px solid var(--rosa-pale);border-radius:10px;font-size:14px;font-family:'Nunito',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+        <div>
+          <label style="font-size:12px;color:var(--cinza);font-weight:600;display:block;margin-bottom:4px">Hora</label>
+          <input type="time" id="enc-pdv-hora"
+            style="width:100%;padding:10px;border:2px solid var(--rosa-pale);border-radius:10px;font-size:14px;font-family:'Nunito',sans-serif;outline:none;box-sizing:border-box">
+        </div>
+      </div>
+      <label style="font-size:12px;color:var(--cinza);font-weight:600;display:block;margin-bottom:4px">Observações</label>
+      <textarea id="enc-pdv-obs" rows="2" placeholder="Ex: sem glúten, entregar 14h, etc."
+        style="width:100%;padding:10px;border:2px solid var(--rosa-pale);border-radius:10px;font-size:14px;font-family:'Nunito',sans-serif;outline:none;box-sizing:border-box;resize:vertical"></textarea>
+    </div>
   </div>
 
   <div class="checkout-footer">
@@ -389,6 +448,7 @@ const LOJAS = [
 let estado = {
   usuario:   null,
   loja:      null,       // { id, nome, emoji, cor }
+  tipo:      null,       // 'venda' | 'encomenda'
   cardapio:  [],         // items do cardápio filtrado pela loja
   carrinho:  {},         // { itemId: { item, qty } }
   catAtiva:  'todas',
@@ -620,7 +680,11 @@ async function entrarLoja(lojaId) {
   renderCats();
   renderGrid();
   renderCartBar();
-  mostrar('screen-pdv');
+
+  // Mostra tela de escolha de tipo (Venda / Encomenda) em vez de ir direto pro PDV
+  const tipoLojaEl = document.getElementById('tipo-loja-nome');
+  if (tipoLojaEl) tipoLojaEl.textContent = `${loja.emoji} ${loja.nome}`;
+  mostrar('screen-tipo');
 
   // Listener em tempo real — monitora o doc da loja E o da mestre
   const docKey = lojaId !== LOJA_MASTER_CARDAPIO ? `_L_${LOJA_MASTER_CARDAPIO}_cardapio` : `_L_${lojaId}_cardapio`;
@@ -806,9 +870,29 @@ function selPagto(btn) {
 }
 
 // ════════════════════════════════════════════════════════════════════════════
+// TIPO DE OPERAÇÃO (Venda Loja vs Encomenda)
+// ════════════════════════════════════════════════════════════════════════════
+function escolherTipo(tipo) {
+  estado.tipo = tipo;
+  const btnFin = document.getElementById('btn-finalizar');
+  const secEnc = document.getElementById('checkout-sec-encomenda');
+  if (tipo === 'encomenda') {
+    if (btnFin) btnFin.textContent = '📦 Salvar Encomenda';
+    if (secEnc) secEnc.style.display = '';
+    const dataEl = document.getElementById('enc-pdv-data');
+    if (dataEl && !dataEl.value) dataEl.value = new Date().toISOString().slice(0, 10);
+  } else {
+    if (btnFin) btnFin.textContent = '✅ Confirmar Venda';
+    if (secEnc) secEnc.style.display = 'none';
+  }
+  mostrar('screen-pdv');
+}
+
+// ════════════════════════════════════════════════════════════════════════════
 // FINALIZAR PEDIDO → SALVA NO FIRESTORE
 // ════════════════════════════════════════════════════════════════════════════
 async function finalizarPedido() {
+  if (estado.tipo === 'encomenda') return finalizarEncomenda();
   const entries = Object.values(estado.carrinho);
   if (!entries.length) return;
 
@@ -872,11 +956,93 @@ async function finalizarPedido() {
   btn.textContent = '✅ Confirmar Venda';
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// FINALIZAR ENCOMENDA → SALVA NO FIRESTORE (integra com Manager)
+// ════════════════════════════════════════════════════════════════════════════
+async function finalizarEncomenda() {
+  const entries = Object.values(estado.carrinho);
+  if (!entries.length) { toast('⚠️ Adicione pelo menos um item à encomenda.'); return; }
+
+  const dataEntrega = document.getElementById('enc-pdv-data')?.value;
+  const horaEntrega = document.getElementById('enc-pdv-hora')?.value || '';
+  const obsTxt      = document.getElementById('enc-pdv-obs')?.value  || '';
+
+  if (!dataEntrega) { toast('⚠️ Informe a data de entrega.'); return; }
+  if (!estado.cliente) { toast('⚠️ Selecione um cliente para a encomenda.'); return; }
+
+  const btn = document.getElementById('btn-finalizar');
+  btn.disabled    = true;
+  btn.textContent = '⏳ Salvando…';
+
+  const lojaId = estado.loja.id;
+  const loja   = estado.loja.nome;
+
+  const itens = entries.map(({item, qty}) => ({
+    produto: item.nome,
+    qtd:     qty,
+    valor:   Number((getPrecoItem(item) * qty).toFixed(2)),
+  }));
+  const valor = itens.reduce((s, it) => s + (it.valor || 0), 0);
+
+  const encomenda = {
+    id:           'enc' + Date.now(),
+    clienteId:    estado.cliente.id,
+    clienteNome:  estado.cliente.nome,
+    clienteTel:   estado.cliente.telefone || estado.cliente.tel || '',
+    data:         dataEntrega,
+    hora:         horaEntrega,
+    loja,
+    pagto:        (estado.pagto || 'PIX').toLowerCase(),
+    obs:          obsTxt,
+    itens,
+    valor:        Number(valor.toFixed(2)),
+    status:       'pendente',
+    criadoEm:     new Date().toISOString(),
+    origem:       'pdv',
+  };
+
+  try {
+    const encRef = fbDb.collection('chocake_sync').doc(`_L_${lojaId}_encomendas`);
+    await fbDb.runTransaction(async (tx) => {
+      const encDoc = await tx.get(encRef);
+      let lista = [];
+      if (encDoc.exists) {
+        const v = encDoc.data().v;
+        lista = JSON.parse(typeof v === 'string' ? v : JSON.stringify(v)) || [];
+      }
+      lista.unshift(encomenda);
+      tx.set(encRef, { v: JSON.stringify(lista), t: new Date().toISOString() });
+    });
+
+    document.getElementById('ok-total').textContent = fmtR(valor);
+    document.getElementById('ok-detail').innerHTML =
+      `📦 Encomenda para <b>${estado.cliente.nome}</b><br>` +
+      `<span style="font-size:12px;color:var(--cinza)">Entrega em ${dataEntrega}${horaEntrega ? ' às ' + horaEntrega : ''} · ${estado.loja.emoji} ${loja}</span>`;
+    const okTitle = document.querySelector('#screen-ok .ok-title');
+    if (okTitle) okTitle.textContent = 'Encomenda registrada!';
+    mostrar('screen-ok');
+
+  } catch (e) {
+    console.error('Erro ao salvar encomenda:', e);
+    toast('⚠️ Erro ao salvar encomenda. Verifique a conexão e tente novamente.', 4000);
+  }
+
+  btn.disabled    = false;
+  btn.textContent = '📦 Salvar Encomenda';
+}
+
 function novaVenda() {
   estado.carrinho = {};
   renderGrid();
   renderCartBar();
-  mostrar('screen-pdv');
+  const okTitle = document.querySelector('#screen-ok .ok-title');
+  if (okTitle) okTitle.textContent = estado.tipo === 'encomenda' ? 'Encomenda registrada!' : 'Venda registrada!';
+  const d = document.getElementById('enc-pdv-data'); if (d) d.value = '';
+  const h = document.getElementById('enc-pdv-hora'); if (h) h.value = '';
+  const o = document.getElementById('enc-pdv-obs');  if (o) o.value = '';
+  const tipoLojaEl = document.getElementById('tipo-loja-nome');
+  if (tipoLojaEl && estado.loja) tipoLojaEl.textContent = `${estado.loja.emoji} ${estado.loja.nome}`;
+  mostrar('screen-tipo');
 }
 // ════════════════════════════════════════════════════════════════════════════
 // CLIENTES

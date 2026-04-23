@@ -5391,6 +5391,9 @@ function _trocarLoja(novaLoja, forcar) {
     } catch(e) { console.warn('auto-sync cardápio:', e && e.message); }
   }
 
+  // Carrega encomendas do Firestore (pode incluir itens criados no PDV standalone)
+  try { _carregarEncomendasFirestore(novaLoja); } catch(e) {}
+
   // Recarrega processos da loja
   REGISTROS_TEMP = JSON.parse(localStorage.getItem(_lKey('registrosTemp')) || '[]');
   PEDIDOS_REP    = JSON.parse(localStorage.getItem(_lKey('pedidosRep'))    || '[]');
@@ -14400,7 +14403,53 @@ function salvarCliente(returnId) {
 let _encItens  = [];
 window._encView = 'lista';
 
-function salvarEncomendas() { try { localStorage.setItem(_lKey('encomendas'), JSON.stringify(ENCOMENDAS)); } catch(e) {} }
+function salvarEncomendas() {
+  try { localStorage.setItem(_lKey('encomendas'), JSON.stringify(ENCOMENDAS)); } catch(e) {}
+  // Sincroniza com o Firestore no mesmo formato que o PDV usa:
+  //   chocake_sync/_L_{lojaAtiva}_encomendas
+  try {
+    if (typeof _fbDb !== 'undefined' && _fbDb && _fbAuth && _fbAuth.currentUser) {
+      _fbDb.collection('chocake_sync').doc(`_L_${_lojaAtiva}_encomendas`)
+        .set({ v: JSON.stringify(ENCOMENDAS), t: new Date().toISOString() })
+        .catch(e => console.warn('sync encomendas → PDV falhou:', e && e.message));
+    }
+  } catch(e) { console.warn('salvarEncomendas sync:', e && e.message); }
+}
+
+// ─── Escuta encomendas em tempo real do Firestore (integra com PDV) ───────────
+let _unsubEncomendas = null;
+async function _carregarEncomendasFirestore(lojaId) {
+  if (typeof _fbDb === 'undefined' || !_fbDb || !_fbAuth?.currentUser) return;
+  try {
+    if (_unsubEncomendas) { _unsubEncomendas(); _unsubEncomendas = null; }
+    const ref = _fbDb.collection('chocake_sync').doc(`_L_${lojaId}_encomendas`);
+    const doc = await ref.get();
+    if (doc.exists) {
+      const v = doc.data().v;
+      const remoto = JSON.parse(typeof v === 'string' ? v : JSON.stringify(v)) || [];
+      if (_lojaAtiva === lojaId) {
+        ENCOMENDAS = remoto;
+        localStorage.setItem(_lKey('encomendas'), JSON.stringify(ENCOMENDAS));
+        if (typeof renderEncomendas === 'function') { try { renderEncomendas(); renderKPIsEncomendas(); } catch(e) {} }
+      }
+    }
+    _unsubEncomendas = ref.onSnapshot(snap => {
+      if (!snap.exists) return;
+      if (_lojaAtiva !== lojaId) return;
+      try {
+        const v = snap.data().v;
+        const remoto = JSON.parse(typeof v === 'string' ? v : JSON.stringify(v)) || [];
+        const mudou = JSON.stringify(remoto) !== JSON.stringify(ENCOMENDAS);
+        if (mudou) {
+          ENCOMENDAS = remoto;
+          localStorage.setItem(_lKey('encomendas'), JSON.stringify(ENCOMENDAS));
+          if (typeof renderEncomendas === 'function') { try { renderEncomendas(); renderKPIsEncomendas(); } catch(e) {} }
+          if (typeof showToast === 'function') showToast('📦 Encomendas atualizadas do PDV', 2000);
+        }
+      } catch(e) { console.warn('onSnapshot encomendas:', e); }
+    }, err => console.warn('onSnapshot encomendas err:', err));
+  } catch(e) { console.warn('carregar encomendas Firestore:', e && e.message); }
+}
 
 function initEncomendas() {
   // Define semana atual no filtro
