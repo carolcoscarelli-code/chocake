@@ -19295,7 +19295,11 @@ function _voltarSeletor() {
   // Limpa contexto salvo para forçar a seleção
   localStorage.removeItem('_contextoAtual');
   _contextoAtual = null;
-  document.getElementById('screen-seletor')?.classList.remove('hidden');
+  const selEl = document.getElementById('screen-seletor');
+  if (selEl) {
+    selEl.classList.remove('hidden');
+    selEl.style.display = ''; // remove o inline display:none setado em selecionarContexto
+  }
 }
 
 
