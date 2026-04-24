@@ -128,7 +128,143 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     overflow: hidden;
   }
 
-  /* ── SIDEBAR ── */
+
+  /* ═══════════════════════════════════════════════════
+     RESPONSIVO MOBILE — abaixo de 768px
+     ═══════════════════════════════════════════════════ */
+  .mobile-only { display: none !important; }
+  #mobile-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(44,22,8,.45);
+    z-index: 99;
+    animation: fadeIn .18s ease;
+  }
+  @keyframes fadeIn { from { opacity: 0 } to { opacity: 1 } }
+
+  @media (max-width: 768px) {
+    .mobile-only { display: flex !important; }
+    .desktop-only { display: none !important; }
+
+    /* Sidebar vira drawer que desliza pela esquerda */
+    .sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      height: 100vh;
+      width: 260px;
+      min-width: 260px;
+      max-width: 260px;
+      transform: translateX(-105%);
+      transition: transform .28s cubic-bezier(.4,0,.2,1);
+      z-index: 100;
+      box-shadow: 4px 0 24px rgba(44,22,8,.25);
+    }
+    .sidebar.open { transform: translateX(0); }
+    #mobile-backdrop.show { display: block; }
+
+    /* App content ocupa largura total */
+    #app-content { width: 100vw; }
+
+    /* Topbar: menos padding, hambúrguer visível */
+    .topbar {
+      padding: 8px 12px !important;
+      gap: 6px !important;
+      flex-wrap: nowrap;
+      overflow-x: auto;
+    }
+    .topbar::-webkit-scrollbar { display: none; }
+    .topbar-date { display: none !important; }
+    /* Esconde botões secundários da topbar — ficam na sidebar ou menu */
+    .topbar button[title*='backup'],
+    .topbar label[title*='backup'],
+    .topbar button[title*='Limpar'],
+    .topbar button[title*='nome da loja'] { display: none !important; }
+    .topbar .btn-undo-sep { display: none !important; }
+    .topbar-breadcrumb { font-size: 14px !important; }
+
+    /* Botão hambúrguer */
+    .hamburger-btn {
+      display: flex !important;
+      align-items: center; justify-content: center;
+      width: 40px; height: 40px;
+      background: transparent;
+      border: 1.5px solid rgba(232,175,163,.4);
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--marrom);
+      flex-shrink: 0;
+    }
+
+    /* Page: menos padding, títulos menores */
+    main { padding: 12px !important; }
+    .page-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 10px;
+      margin-bottom: 14px !important;
+    }
+    .page-title { font-size: 22px !important; }
+    .page-subtitle { font-size: 12px !important; }
+
+    /* Grids: sempre 1 coluna em mobile */
+    .grid, .grid-2, .grid-3, .grid-4 {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+
+    /* Cards: menos padding */
+    .card { padding: 14px !important; }
+    .kpi-card { padding: 14px !important; }
+    .kpi-value { font-size: 20px !important; }
+
+    /* Tabelas: scroll horizontal */
+    .table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      margin: 0 -4px;
+    }
+    .table-wrap table { min-width: 560px; }
+
+    /* Form inputs: alvos de toque maiores */
+    input, select, textarea, button {
+      min-height: 40px;
+      font-size: 15px !important; /* evita zoom do iOS no focus */
+    }
+    input[type=checkbox], input[type=radio] { min-height: auto; }
+    .form-row {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* Modais: cobrem a tela inteira */
+    .modal-overlay { padding: 8px !important; }
+    .modal, .modal-content {
+      max-width: 100vw !important;
+      max-height: 92vh !important;
+      width: 100% !important;
+      border-radius: 14px 14px 0 0 !important;
+      margin-top: auto;
+    }
+
+    /* Tabs: deixa scroll horizontal suave */
+    .tabs {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-wrap: nowrap !important;
+    }
+    .tabs::-webkit-scrollbar { display: none; }
+    .tab { flex-shrink: 0; font-size: 13px !important; padding: 8px 14px !important; }
+
+    /* Seletor de contexto: ajusta cards */
+    #screen-seletor .seletor-card {
+      padding: 20px 18px !important;
+    }
+  }
+
+  /* Hambúrguer sempre escondido no desktop, só aparece no CSS mobile-only */
+  .hamburger-btn { display: none; }
+
+    /* ── SIDEBAR ── */
   .sidebar {
     width: var(--sidebar-w);
     min-width: var(--sidebar-w);
@@ -1169,6 +1305,7 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
 
 <!-- TOP BAR -->
 <div class="topbar">
+<button class="hamburger-btn mobile-only" onclick="_toggleSidebarMobile()" title="Abrir menu" aria-label="Menu">☰</button>
 <button id="btn-trocar-ctx" onclick="_voltarSeletor()"
   style="display:flex;align-items:center;gap:6px;padding:6px 12px;border:1.5px solid rgba(200,130,100,.3);border-radius:10px;background:rgba(253,240,238,.7);color:#7A5230;font-size:12px;font-weight:700;cursor:pointer;margin-right:4px;"
   title="Voltar para seleção de loja">← Lojas</button>
@@ -20600,6 +20737,39 @@ function configurarNomeLoja() {
   showToast('✅ Nome da loja salvo: ' + nome);
 }
 
+
+// ═══════════════════════════════════════════════════
+// MOBILE — sidebar drawer
+// ═══════════════════════════════════════════════════
+function _toggleSidebarMobile() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('mobile-backdrop');
+  if (!sb) return;
+  const isOpen = sb.classList.toggle('open');
+  if (bd) bd.classList.toggle('show', isOpen);
+  // Bloqueia scroll do body quando menu aberto
+  document.body.style.overflow = isOpen ? 'hidden' : '';
+}
+function _closeSidebarMobile() {
+  const sb = document.querySelector('.sidebar');
+  const bd = document.getElementById('mobile-backdrop');
+  if (sb) sb.classList.remove('open');
+  if (bd) bd.classList.remove('show');
+  document.body.style.overflow = '';
+}
+// Fecha ao clicar em item do nav
+document.addEventListener('click', (e) => {
+  if (window.innerWidth > 768) return;
+  const sb = document.querySelector('.sidebar');
+  if (!sb || !sb.classList.contains('open')) return;
+  const item = e.target.closest('.nav-item');
+  if (item) _closeSidebarMobile();
+});
+// Fecha ao redimensionar acima do breakpoint
+window.addEventListener('resize', () => {
+  if (window.innerWidth > 768) _closeSidebarMobile();
+});
 </script>
+<div id="mobile-backdrop" onclick="_closeSidebarMobile()"></div>
 </body>
 </html>
