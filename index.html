@@ -7942,9 +7942,12 @@ function _parsRendimentoNum(f) {
 }
 
 function _custoBatch(f) {
-  if (f.custo_calculado && f.custo_calculado > 0) return f.custo_calculado;
+  // SEMPRE recalcula a partir dos ingredientes atuais — o cache f.custo_calculado
+  // só é usado como fallback quando os ingredientes nao têm qtd numérica
+  // (ex: fichas de Páscoa com qtds em string).
   const { total } = calcularCustoFichaReal(f);
-  return total || 0;
+  if (total > 0) return total;
+  return (f.custo_calculado && f.custo_calculado > 0) ? f.custo_calculado : 0;
 }
 
 
@@ -8898,6 +8901,14 @@ async function salvarEdicaoFicha() {
   fichaAberta.forno       = document.getElementById('edit-forno')?.value?.trim() || '';
   fichaAberta.preco       = parseFloat(document.getElementById('edit-preco')?.value || 0) || 0;
   fichaAberta.ingredientes    = ingredientesEditForm.filter(i => i.nome?.trim());
+  // Invalida o cache de custo — força recálculo a partir dos novos ingredientes
+  if (typeof calcularCustoFichaReal === 'function') {
+    const _r = calcularCustoFichaReal(fichaAberta);
+    if (_r.total > 0) {
+      fichaAberta.custo_calculado = _r.total;
+      fichaAberta.custo_detalhes  = _r.detalhes;
+    }
+  }
   fichaAberta.preparo         = (document.getElementById('edit-preparo')?.value || '').split('\n').filter(p => p.trim());
   fichaAberta.utensilios      = (document.getElementById('edit-utensilios')?.value || '').split('\n').filter(p => p.trim());
   fichaAberta.custo_calculado = 0;
@@ -8962,6 +8973,14 @@ function _agendarAutoSave() {
     fichaAberta.forno      = document.getElementById('edit-forno')?.value?.trim() || '';
     fichaAberta.preco      = parseFloat(document.getElementById('edit-preco')?.value || 0) || 0;
     fichaAberta.ingredientes    = ingredientesEditForm.filter(i => i.nome?.trim());
+  // Invalida o cache de custo — força recálculo a partir dos novos ingredientes
+  if (typeof calcularCustoFichaReal === 'function') {
+    const _r = calcularCustoFichaReal(fichaAberta);
+    if (_r.total > 0) {
+      fichaAberta.custo_calculado = _r.total;
+      fichaAberta.custo_detalhes  = _r.detalhes;
+    }
+  }
     fichaAberta.preparo         = (document.getElementById('edit-preparo')?.value || '').split('\n').filter(p => p.trim());
     fichaAberta.utensilios      = (document.getElementById('edit-utensilios')?.value || '').split('\n').filter(p => p.trim());
     fichaAberta.custo_calculado = 0;
