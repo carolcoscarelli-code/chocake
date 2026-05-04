@@ -10492,10 +10492,22 @@ function _calcLinha(nome, canal, precoFallback) {
     ? ((taxa_ifood_pct + incentivos_pct) / 100) * preco
     : (taxa_pct / 100) * preco;
   const custo_taxas    = cmv + fixos_val + impostos_val + taxa_val;
-  // Resolve o preço sugerido para que (sugerido - custo_total) / sugerido = margem_pct%
+  // Resolve o preço sugerido tratando custos FIXOS como ABSOLUTOS (R\$ por produto)
+  // e impostos/taxa/margem como percentuais sobre o preço:
+  //
+  //   P = (CMV + Fixos_R\$) / (1 - (impostos% + taxa% + margem%) / 100)
+  //
+  // Antes a fórmula somava fixos_pct ao divisor, o que tratava custos fixos como se
+  // escalassem com o preço — gerando preços absurdos quando fixos_pct era alto.
   const taxa_pct_efetiva = canal === 'ifood' ? (taxa_ifood_pct + incentivos_pct) : taxa_pct;
-  const divisor = 1 - (fixos_pct + impostos_pct + taxa_pct_efetiva + margem_pct) / 100;
-  const sugerido = (cmv > 0 && divisor > 0) ? cmv / divisor : 0;
+  const divisor = 1 - (impostos_pct + taxa_pct_efetiva + margem_pct) / 100;
+  // Para produtos sem preço definido (preco=0), usa o ticket médio da loja como
+  // referência para estimar a alocação de fixos absoluta.
+  const _ticketRef = (typeof PE_CONFIG !== 'undefined' && PE_CONFIG['Funcionários']?.ticketMedio) || 30;
+  const _precoRef  = preco > 0 ? preco : _ticketRef;
+  const fixos_abs  = (fixos_pct / 100) * _precoRef;
+  const custo_fixo_abs = cmv + fixos_abs;
+  const sugerido = (custo_fixo_abs > 0 && divisor > 0) ? custo_fixo_abs / divisor : 0;
   const lucro          = preco - custo_taxas;
   const lucro_pct      = preco > 0 ? (lucro / preco) * 100 : 0;
   const cmv_pct        = preco > 0 ? (cmv   / preco) * 100 : 0;
