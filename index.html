@@ -595,44 +595,44 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     table-layout: fixed;
     width: 100%;
   }
-  /* Larguras explícitas (1=Produto, 2=CMV, 3=Fixos, 4=Impostos, 5=Taxa,
-     6=Custo+Taxas, 7=Preço, 8=Sugerido, 9=%CMV, 10=Lucro%, 11=Status, 12=Ação) */
+  /* Larguras em porcentagem para distribuição equilibrada
+     (1=Produto: 24%, demais somam 76%, ação fica pequena) */
   [id^="prec-painel-loja_"] table th:nth-child(1),
-  [id^="prec-painel-ifood_"] table th:nth-child(1) { width: auto; }
+  [id^="prec-painel-ifood_"] table th:nth-child(1) { width: 24%; }
   [id^="prec-painel-loja_"] table th:nth-child(2),
-  [id^="prec-painel-ifood_"] table th:nth-child(2),
+  [id^="prec-painel-ifood_"] table th:nth-child(2) { width: 7.5%; }
   [id^="prec-painel-loja_"] table th:nth-child(3),
-  [id^="prec-painel-ifood_"] table th:nth-child(3),
+  [id^="prec-painel-ifood_"] table th:nth-child(3) { width: 7%; }
   [id^="prec-painel-loja_"] table th:nth-child(4),
-  [id^="prec-painel-ifood_"] table th:nth-child(4) { width: 50px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(4) { width: 7%; }
   [id^="prec-painel-loja_"] table th:nth-child(5),
-  [id^="prec-painel-ifood_"] table th:nth-child(5),
+  [id^="prec-painel-ifood_"] table th:nth-child(5) { width: 8%; }
   [id^="prec-painel-loja_"] table th:nth-child(6),
-  [id^="prec-painel-ifood_"] table th:nth-child(6) { width: 60px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(6) { width: 8.5%; }
   [id^="prec-painel-loja_"] table th:nth-child(7),
-  [id^="prec-painel-ifood_"] table th:nth-child(7),
+  [id^="prec-painel-ifood_"] table th:nth-child(7) { width: 9%; }
   [id^="prec-painel-loja_"] table th:nth-child(8),
-  [id^="prec-painel-ifood_"] table th:nth-child(8) { width: 70px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(8) { width: 8.5%; }
   [id^="prec-painel-loja_"] table th:nth-child(9),
-  [id^="prec-painel-ifood_"] table th:nth-child(9),
+  [id^="prec-painel-ifood_"] table th:nth-child(9) { width: 6%; }
   [id^="prec-painel-loja_"] table th:nth-child(10),
-  [id^="prec-painel-ifood_"] table th:nth-child(10) { width: 50px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(10) { width: 6.5%; }
   [id^="prec-painel-loja_"] table th:nth-child(11),
-  [id^="prec-painel-ifood_"] table th:nth-child(11) { width: 70px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(11) { width: 7%; }
   [id^="prec-painel-loja_"] table th:nth-child(12),
-  [id^="prec-painel-ifood_"] table th:nth-child(12) { width: 26px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(12) { width: 3%; }
   [id^="prec-painel-loja_"] table thead th,
   [id^="prec-painel-ifood_"] table thead th {
-    padding: 6px 3px !important;
-    font-size: 9px !important;
+    padding: 7px 5px !important;
+    font-size: 9.5px !important;
     letter-spacing: 0;
-    line-height: 1.15;
+    line-height: 1.2;
     overflow: hidden;
     text-overflow: ellipsis;
   }
   [id^="prec-painel-loja_"] table tbody td,
   [id^="prec-painel-ifood_"] table tbody td {
-    padding: 5px 3px !important;
+    padding: 6px 5px !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -646,10 +646,11 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
   }
   [id^="prec-painel-loja_"] table input[type="number"],
   [id^="prec-painel-ifood_"] table input[type="number"] {
-    width: 100% !important;
-    max-width: 65px;
-    font-size: 10.5px !important;
-    padding: 3px 4px !important;
+    width: calc(100% - 4px) !important;
+    max-width: none;
+    font-size: 11px !important;
+    padding: 4px 6px !important;
+    box-sizing: border-box;
   }
   [id^="prec-painel-loja_"] table .badge,
   [id^="prec-painel-ifood_"] table .badge {
