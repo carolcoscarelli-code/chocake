@@ -10395,21 +10395,86 @@ const PREC_IFOOD = [{"nome": "MASSA PRONTA", "cmv": 15.4197, "fixos": 8.5967, "i
 
 // ── Precificação — Config dinâmica ────────────────────────────────────────────
 const PREC_CONFIG_DEFAULT = {
+  // ── Canais POR LOJA (lojas físicas) ────────────────────────────────────
+  loja_funcionarios: { impostos_pct: 10, perdas_pct: 3, taxa_pct: 3, margem_pct: 40, faturamento_ref: 60000 },
+  loja_viladaserra:  { impostos_pct: 10, perdas_pct: 3, taxa_pct: 3, margem_pct: 40, faturamento_ref: 60000 },
+  // ── Canais POR LOJA (iFood) ────────────────────────────────────────────
+  ifood_funcionarios: { impostos_pct: 10, perdas_pct: 3, taxa_ifood_pct: 29.5, incentivos_pct: 5, margem_pct: 15, faturamento_ref: 25000 },
+  ifood_viladaserra:  { impostos_pct: 10, perdas_pct: 3, taxa_ifood_pct: 29.5, incentivos_pct: 5, margem_pct: 15, faturamento_ref: 25000 },
+  ifood_sion:         { impostos_pct: 10, perdas_pct: 3, taxa_ifood_pct: 29.5, incentivos_pct: 5, margem_pct: 15, faturamento_ref: 25000 },
+  // ── Canais especiais (markup-based) ────────────────────────────────────
+  transferencia: { markup_pct: 20 },
+  revenda:       { markup_pct: 30 },
+  // ── Canais antigos (mantidos pra retrocompat / migração) ───────────────
   loja:        { impostos_pct: 10, perdas_pct: 3, taxa_pct: 3,    margem_pct: 40, faturamento_ref: 60000 },
   ifood:       { impostos_pct: 10, perdas_pct: 3, taxa_ifood_pct: 29.5, incentivos_pct: 5, margem_pct: 15, faturamento_ref: 25000 },
-  transferencia: { markup_pct: 20 }
 };
+
+// Configuração das abas de Precificação
+const PREC_TABS = [
+  { id: 'transferencia',     label: '🔄 Venda entre lojas',   type: 'markup' },
+  { id: 'loja_funcionarios', label: '🏪 Loja Funcionários',   type: 'loja' },
+  { id: 'ifood_funcionarios',label: '🛵 iFood Funcionários',  type: 'ifood' },
+  { id: 'loja_viladaserra',  label: '🏡 Loja Vila da Serra',  type: 'loja' },
+  { id: 'ifood_viladaserra', label: '🛵 iFood Vila da Serra', type: 'ifood' },
+  { id: 'ifood_sion',        label: '🛵 iFood Sion',          type: 'ifood' },
+  { id: 'revenda',           label: '🤝 Revenda',             type: 'markup' },
+];
+
+// Helper: dado um canal, retorna o nome da loja correspondente
+function _canalParaLoja(canal) {
+  if (typeof canal !== 'string') return 'Funcionários';
+  if (canal.endsWith('_funcionarios')) return 'Funcionários';
+  if (canal.endsWith('_viladaserra'))  return 'Vila da Serra';
+  if (canal.endsWith('_sion'))         return 'Sion';
+  return 'Funcionários';
+}
+
+// Helper: dado um canal, retorna o tipo base (loja, ifood, markup)
+function _canalBase(canal) {
+  if (typeof canal !== 'string') return canal;
+  if (canal.startsWith('ifood')) return 'ifood';
+  if (canal.startsWith('loja'))  return 'loja';
+  return canal;
+}
 let PREC_CONFIG = (() => {
   const saved = JSON.parse(localStorage.getItem('precConfig') || 'null');
   const def   = JSON.parse(JSON.stringify(PREC_CONFIG_DEFAULT));
   if (!saved) return def;
-  return {
-    loja:          { ...def.loja,          ...(saved.loja          || {}) },
-    ifood:         { ...def.ifood,         ...(saved.ifood         || {}) },
-    transferencia: { ...def.transferencia, ...(saved.transferencia || {}) }
-  };
+  const merged = {};
+  Object.keys(def).forEach(k => { merged[k] = { ...def[k], ...(saved[k] || {}) }; });
+  Object.keys(saved).forEach(k => { if (!merged[k]) merged[k] = saved[k]; });
+  // Migração: se há saved.loja antigo, copia pra novos canais
+  if (saved.loja  && !saved.loja_funcionarios)  merged.loja_funcionarios  = { ...def.loja_funcionarios,  ...saved.loja  };
+  if (saved.loja  && !saved.loja_viladaserra)   merged.loja_viladaserra   = { ...def.loja_viladaserra,   ...saved.loja  };
+  if (saved.ifood && !saved.ifood_funcionarios) merged.ifood_funcionarios = { ...def.ifood_funcionarios, ...saved.ifood };
+  if (saved.ifood && !saved.ifood_viladaserra)  merged.ifood_viladaserra  = { ...def.ifood_viladaserra,  ...saved.ifood };
+  if (saved.ifood && !saved.ifood_sion)         merged.ifood_sion         = { ...def.ifood_sion,         ...saved.ifood };
+  return merged;
 })();
 let PREC_PRECOS_USER  = JSON.parse(localStorage.getItem('precPrecosUser')  || 'null');
+// Migração: copia preços antigos (loja:NOME, ifood:NOME) para os novos canais por loja
+(function _migrarPrecosPerLoja() {
+  if (localStorage.getItem('_precPerLojaMigrado')) return;
+  if (!PREC_PRECOS_USER) PREC_PRECOS_USER = {};
+  const novas = {};
+  Object.keys(PREC_PRECOS_USER).forEach(k => {
+    const v = PREC_PRECOS_USER[k];
+    if (k.startsWith('loja:')) {
+      const nome = k.slice(5);
+      if (PREC_PRECOS_USER['loja_funcionarios:' + nome] == null) novas['loja_funcionarios:' + nome] = v;
+      if (PREC_PRECOS_USER['loja_viladaserra:'  + nome] == null) novas['loja_viladaserra:'  + nome] = v;
+    } else if (k.startsWith('ifood:')) {
+      const nome = k.slice(6);
+      if (PREC_PRECOS_USER['ifood_funcionarios:' + nome] == null) novas['ifood_funcionarios:' + nome] = v;
+      if (PREC_PRECOS_USER['ifood_viladaserra:'  + nome] == null) novas['ifood_viladaserra:'  + nome] = v;
+      if (PREC_PRECOS_USER['ifood_sion:'         + nome] == null) novas['ifood_sion:'         + nome] = v;
+    }
+  });
+  Object.assign(PREC_PRECOS_USER, novas);
+  try { localStorage.setItem('precPrecosUser', JSON.stringify(PREC_PRECOS_USER)); } catch(e) {}
+  localStorage.setItem('_precPerLojaMigrado', '1');
+})();
 let PREC_CAT_ORDEM    = JSON.parse(localStorage.getItem('precCatOrdem')    || 'null'); // array de nomes de categoria
 function _salvarPrecCatOrdem() { localStorage.setItem('precCatOrdem', JSON.stringify(PREC_CAT_ORDEM)); }
 function _precCatMover(cat, idx, dir, rerender) {
@@ -10471,37 +10536,33 @@ function _cmvDaFicha(nomeProduto) {
   return 0;
 }
 
-// Proporção dos fixos = total fixos Funcionários / faturamento de referência
+// Proporção dos fixos = total fixos da LOJA do canal / faturamento de referência
 function _fixosPct(canal) {
-  const cfg = PREC_CONFIG[canal] || PREC_CONFIG.loja;
-  const fatRef = cfg.faturamento_ref || 60000;
-  const totalFixos = _totalFixosLoja('Funcionários');
+  const cfg = PREC_CONFIG[canal] || PREC_CONFIG.loja_funcionarios || PREC_CONFIG.loja;
+  const fatRef = (cfg && cfg.faturamento_ref) || 60000;
+  const lojaNome = _canalParaLoja(canal);
+  const totalFixos = _totalFixosLoja(lojaNome);
   return (totalFixos > 0 && fatRef > 0) ? (totalFixos / fatRef) * 100 : 0;
 }
 
 // Calcula linha completa para qualquer produto/canal
 function _calcLinha(nome, canal, precoFallback) {
-  const cfg            = PREC_CONFIG[canal] || PREC_CONFIG.loja;
+  const cfg            = PREC_CONFIG[canal] || PREC_CONFIG.loja_funcionarios || PREC_CONFIG.loja || {};
   const cmv            = _cmvDaFicha(nome);
   const fixos_pct      = _fixosPct(canal);
   const impostos_pct   = cfg.impostos_pct   || 0;
-  const taxa_pct       = canal === 'ifood' ? 0 : (cfg.taxa_pct || 0);
-  const taxa_ifood_pct = canal === 'ifood' ? (cfg.taxa_ifood_pct  || 0) : 0;
-  const incentivos_pct = canal === 'ifood' ? (cfg.incentivos_pct  || 0) : 0;
-  // Se em contexto de loja, usa a margem configurada para aquela loja
-  let margem_pct;
-  if (_contextoAtual?.tipo === 'loja' && canal === 'loja') {
-    const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
-    margem_pct = margens[_contextoAtual.id] ?? (cfg.margem_pct || 40);
-  } else {
-    margem_pct = cfg.margem_pct || 40;
-  }
+  const tipo           = _canalBase(canal);
+  const ehIfood        = (tipo === 'ifood');
+  const taxa_pct       = ehIfood ? 0 : (cfg.taxa_pct || 0);
+  const taxa_ifood_pct = ehIfood ? (cfg.taxa_ifood_pct  || 0) : 0;
+  const incentivos_pct = ehIfood ? (cfg.incentivos_pct  || 0) : 0;
+  const margem_pct     = cfg.margem_pct || (ehIfood ? 15 : 40);
   const key            = canal + ':' + nome;
   const precoIsUser    = PREC_PRECOS_USER && PREC_PRECOS_USER[key] != null;
   const preco          = precoIsUser ? PREC_PRECOS_USER[key] : (precoFallback || 0);
   const fixos_val      = (fixos_pct   / 100) * preco;
   const impostos_val   = (impostos_pct / 100) * preco;
-  const taxa_val       = canal === 'ifood'
+  const taxa_val       = ehIfood
     ? ((taxa_ifood_pct + incentivos_pct) / 100) * preco
     : (taxa_pct / 100) * preco;
   const custo_taxas    = cmv + fixos_val + impostos_val + taxa_val;
@@ -10512,7 +10573,7 @@ function _calcLinha(nome, canal, precoFallback) {
   //
   // Antes a fórmula somava fixos_pct ao divisor, o que tratava custos fixos como se
   // escalassem com o preço — gerando preços absurdos quando fixos_pct era alto.
-  const taxa_pct_efetiva = canal === 'ifood' ? (taxa_ifood_pct + incentivos_pct) : taxa_pct;
+  const taxa_pct_efetiva = ehIfood ? (taxa_ifood_pct + incentivos_pct) : taxa_pct;
   const divisor = 1 - (impostos_pct + taxa_pct_efetiva + margem_pct) / 100;
   // Para produtos sem preço definido (preco=0), usa o ticket médio da loja como
   // referência para estimar a alocação de fixos absoluta.
@@ -10543,8 +10604,8 @@ function _atualizarPrecoUser(canal, nome, valor) {
   if (!nome) return;
   PREC_PRECOS_USER[canal + ':' + nome] = parseFloat(valor) || 0;
   _salvarPrecPrecos();
-  if (canal === 'loja')  renderTabelaLoja();
-  if (canal === 'ifood') renderTabelaIfood();
+  // Re-renderiza apenas a tab atual
+  if (typeof _precRenderCanal === 'function') _precRenderCanal(canal);
 }
 
 function _painelParamsPrec(canal) {
