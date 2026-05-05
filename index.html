@@ -581,7 +581,12 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
   }
 
   /* ── TABELAS ── */
-  .table-wrap { overflow-x: auto; }
+  .table-wrap {
+    overflow-x: auto;
+    scrollbar-width: none;          /* Firefox: esconde scrollbar */
+    -ms-overflow-style: none;       /* IE/Edge legado */
+  }
+  .table-wrap::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge */
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th {
     background: #FAF6F1;
