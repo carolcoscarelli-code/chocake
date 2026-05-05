@@ -10545,6 +10545,31 @@ function _fixosPct(canal) {
   return (totalFixos > 0 && fatRef > 0) ? (totalFixos / fatRef) * 100 : 0;
 }
 
+// ── Ocultos por canal: cada aba tem sua própria lista de produtos escondidos ──
+function _precGetOcultos(canal) {
+  try {
+    const all = JSON.parse(localStorage.getItem('_precOcultos') || '{}');
+    return new Set(all[canal] || []);
+  } catch(e) { return new Set(); }
+}
+function _precSetOcultos(canal, nomes) {
+  try {
+    const all = JSON.parse(localStorage.getItem('_precOcultos') || '{}');
+    all[canal] = [...nomes];
+    localStorage.setItem('_precOcultos', JSON.stringify(all));
+  } catch(e) {}
+}
+function _precOcultar(canal, nome) {
+  const s = _precGetOcultos(canal);
+  s.add(nome);
+  _precSetOcultos(canal, s);
+  if (typeof _precRenderCanal === 'function') _precRenderCanal(canal);
+}
+function _precRestaurarOcultos(canal) {
+  _precSetOcultos(canal, []);
+  if (typeof _precRenderCanal === 'function') _precRenderCanal(canal);
+}
+
 // Calcula linha completa para qualquer produto/canal
 function _calcLinha(nome, canal, precoFallback) {
   const cfg            = PREC_CONFIG[canal] || PREC_CONFIG.loja_funcionarios || PREC_CONFIG.loja || {};
@@ -10713,7 +10738,18 @@ function _renderTabelaCalc(canal) {
   const el = document.getElementById('prec-painel-' + canal);
   if (!el) return;
   const tab = PREC_TABS.find(t => t.id === canal);
-  el.innerHTML = _painelParamsPrec(canal) + _tabelaPrecPorCategoria(canal, tab.label, '', null);
+  el.innerHTML = _painelParamsPrec(canal) + _bannerOcultos(canal) + _tabelaPrecPorCategoria(canal, tab.label, '', null);
+}
+
+// Banner mostrado no topo quando há produtos ocultos nesta aba
+function _bannerOcultos(canal) {
+  const ocultos = _precGetOcultos(canal);
+  if (ocultos.size === 0) return '';
+  return `<div class="card" style="margin-bottom:12px;padding:10px 14px;background:rgba(168,112,79,.06);border:1.5px solid rgba(168,112,79,.25);display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+    <span style="font-size:13px;color:var(--text-light)">🙈 <b style="color:var(--marrom)">${ocultos.size}</b> ${ocultos.size === 1 ? 'produto oculto' : 'produtos ocultos'} nesta aba</span>
+    <button onclick="_precRestaurarOcultos('${canal}')"
+      style="margin-left:auto;background:transparent;border:1.5px solid rgba(168,112,79,.4);color:var(--marrom);padding:4px 12px;border-radius:8px;font-family:'Nunito',sans-serif;font-size:12px;font-weight:700;cursor:pointer">↺ Restaurar todos</button>
+  </div>`;
 }
 
 function _renderTabelaMarkup(canal) {
@@ -10732,7 +10768,9 @@ function _renderTabelaMarkup(canal) {
   }
 
   const busca = (document.getElementById('busca-prec-' + canal)?.value || '').toLowerCase();
-  const filtrados = busca ? todosProdutos.filter(p => p.nome.toLowerCase().includes(busca)) : todosProdutos;
+  const ocultos = _precGetOcultos(canal);
+  const semOcultos = todosProdutos.filter(p => !ocultos.has(p.nome));
+  const filtrados = busca ? semOcultos.filter(p => p.nome.toLowerCase().includes(busca)) : semOcultos;
   const catOrder = [...new Set(fichas.filter(f => !_isReceitaBase(f.categoria)).map(f => f.categoria))];
   const porCat = {};
   filtrados.forEach(p => {
@@ -10759,6 +10797,10 @@ function _renderTabelaMarkup(canal) {
           <td style="padding:8px 14px;font-weight:700;color:var(--marrom)">${p.nome}</td>
           <td style="text-align:right;padding:8px 10px;font-weight:600;color:${corCMV}">${_R2(cmv)}</td>
           <td style="text-align:right;padding:8px 10px;font-weight:700;color:var(--success)">${precoCalc > 0 ? _R2(precoCalc) : '—'}</td>
+          <td style="text-align:center;padding:8px 6px;width:30px">
+            <button onclick="_precOcultar('${canal}','${p.nome.replace(/'/g,"\\'")}')" title="Remover desta aba"
+              style="background:transparent;border:1.5px solid rgba(200,96,96,.3);color:var(--danger);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;line-height:1">×</button>
+          </td>
         </tr>`;
       }).join('');
       return `<div class="card" style="margin-bottom:14px">
@@ -10769,7 +10811,7 @@ function _renderTabelaMarkup(canal) {
         </div>
         <div class="table-wrap">
           <table>
-            <thead><tr><th>Produto</th><th style="text-align:right">CMV (ficha)</th><th style="text-align:right">${colTitulo}</th></tr></thead>
+            <thead><tr><th>Produto</th><th style="text-align:right">CMV (ficha)</th><th style="text-align:right">${colTitulo}</th><th style="text-align:center;width:30px"></th></tr></thead>
             <tbody>${linhas}</tbody>
           </table>
         </div>
@@ -10802,7 +10844,7 @@ function _renderTabelaMarkup(canal) {
     </div>
   </div>`;
 
-  el.innerHTML = paramsCard + searchBar + secoes;
+  el.innerHTML = paramsCard + _bannerOcultos(canal) + searchBar + secoes;
 }
 
 // Compat: wrappers das funções antigas
@@ -10898,7 +10940,9 @@ function _tabelaPrecPorCategoria(canal, tituloCanal, extraHead, extraCell) {
 
   // Cabeçalho do canal + busca
   const busca = (document.getElementById('busca-prec-' + canal)?.value || '').toLowerCase();
-  const filtrados = busca ? todosProdutos.filter(p => p.nome.toLowerCase().includes(busca)) : todosProdutos;
+  const ocultos = _precGetOcultos(canal);
+  const semOcultos = todosProdutos.filter(p => !ocultos.has(p.nome));
+  const filtrados = busca ? semOcultos.filter(p => p.nome.toLowerCase().includes(busca)) : semOcultos;
 
   // Agrupa por categoria — respeita ordem customizada se existir
   const catNatural = [...new Set(fichas.filter(f => !_isReceitaBase(f.categoria)).map(f => f.categoria))];
@@ -10926,6 +10970,7 @@ function _tabelaPrecPorCategoria(canal, tituloCanal, extraHead, extraCell) {
     <th style="text-align:right">%\u00a0CMV</th>
     <th style="text-align:right">Lucro\u00a0%</th>
     <th style="text-align:center">Status</th>
+    <th style="text-align:center;width:30px"></th>
   </tr></thead>`;
 
   const secoes = catOrder
@@ -10968,6 +11013,10 @@ function _tabelaPrecPorCategoria(canal, tituloCanal, extraHead, extraCell) {
           <td style="text-align:right;padding:8px 10px;font-weight:700;color:${corCMV}">${d.cmv_pct.toFixed(1)}%</td>
           <td style="text-align:right;padding:8px 10px;font-weight:800;color:${corL}">${d.lucro_pct.toFixed(1)}%</td>
           <td style="text-align:center;padding:8px 10px"><span class="badge ${cls}">${label}</span></td>
+          <td style="text-align:center;padding:8px 6px">
+            <button onclick="_precOcultar('${canal}','${p.nome.replace(/'/g,"\\'")}')" title="Remover desta aba"
+              style="background:transparent;border:1.5px solid rgba(200,96,96,.3);color:var(--danger);width:24px;height:24px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:700;line-height:1">×</button>
+          </td>
         </tr>`;
       }).join('');
 
