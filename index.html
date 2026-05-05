@@ -2005,17 +2005,11 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
       <div class="kpi-card red"><span class="kpi-icon">⚠️</span><div class="kpi-label">Menor Margem</div><div class="kpi-value" id="cmv-menor-margem">—</div></div>
     </div>
 
-    <!-- Tabs -->
-    <div class="tabs">
-      <button class="tab active" onclick="switchPrecTab('loja', this)">🏪 Loja</button>
-      <button class="tab" onclick="switchPrecTab('ifood', this)">🛵 iFood</button>
-      <button class="tab" onclick="switchPrecTab('transferencia', this)">🏭 Transferência entre Lojas</button>
-    </div>
+    <!-- Tabs (geradas dinamicamente via PREC_TABS) -->
+    <div class="tabs" id="prec-tabs" style="overflow-x:auto;flex-wrap:nowrap"></div>
 
-    <!-- Painéis -->
-    <div id="prec-painel-loja"></div>
-    <div id="prec-painel-ifood" style="display:none"></div>
-    <div id="prec-painel-transferencia" style="display:none"></div>
+    <!-- Painéis (gerados dinamicamente) -->
+    <div id="prec-paineis"></div>
   </div>
 
   <!-- ====== INSUMOS ====== -->
@@ -10572,12 +10566,13 @@ function _painelParamsPrec(canal) {
     </div>`;
 
   let campos = '';
-  if (canal === 'loja') {
+  const tipo = _canalBase(canal);
+  if (tipo === 'loja') {
     campos = row('Faturamento Ref. (R$)', fatRef, 'faturamento_ref', '1000')
            + row('Impostos % (s/\u00a0venda)',   cfg.impostos_pct ?? 10,  'impostos_pct')
            + row('Taxa Cartão % (s/\u00a0venda)', cfg.taxa_pct    ?? 3,   'taxa_pct')
            + row('Margem de Lucro Desejada',      cfg.margem_pct  ?? 40,  'margem_pct', '', mS);
-  } else if (canal === 'ifood') {
+  } else if (tipo === 'ifood') {
     campos = row('Faturamento Ref. (R$)', fatRef, 'faturamento_ref', '1000')
            + row('Impostos % (s/\u00a0venda)',    cfg.impostos_pct   ?? 10,   'impostos_pct')
            + row('Taxa iFood % (s/\u00a0venda)',   cfg.taxa_ifood_pct ?? 29.5, 'taxa_ifood_pct')
@@ -10595,37 +10590,157 @@ function round2(v) { return v.toLocaleString('pt-BR',{minimumFractionDigits:0,ma
 
 function initPrecificacao() {
   _inicializarPrecPrecos();
-  // KPIs — calculados a partir das fichas técnicas
+
+  // Renderiza tabs dinamicamente
+  const tabsEl = document.getElementById('prec-tabs');
+  const paineisEl = document.getElementById('prec-paineis');
+  if (tabsEl) {
+    tabsEl.innerHTML = PREC_TABS.map((t, i) =>
+      `<button class="tab${i === 0 ? ' active' : ''}" onclick="switchPrecTab('${t.id}', this)">${t.label}</button>`
+    ).join('');
+  }
+  if (paineisEl) {
+    paineisEl.innerHTML = PREC_TABS.map((t, i) =>
+      `<div id="prec-painel-${t.id}" ${i === 0 ? '' : 'style="display:none"'}></div>`
+    ).join('');
+  }
+
+  // KPIs (canal Loja Funcionários como referência)
   const listaPrec  = _fichasParaPrec();
-  const linhasLoja = listaPrec.map(p => _calcLinha(p.nome, 'loja', p.preco));
+  const linhasLoja = listaPrec.map(p => _calcLinha(p.nome, 'loja_funcionarios', p.preco));
   const linhasComPreco = linhasLoja.filter(d => d.preco > 0);
   const cmvMedio = linhasComPreco.length > 0
     ? linhasComPreco.reduce((s,d)=>s+d.cmv_pct,0)/linhasComPreco.length : 0;
   const melhor   = [...linhasLoja].filter(d=>d.lucro_pct>0).sort((a,b)=>b.lucro_pct-a.lucro_pct)[0];
   const pior     = [...linhasLoja].filter(d=>d.lucro_pct>0).sort((a,b)=>a.lucro_pct-b.lucro_pct)[0];
-  document.getElementById('cmv-total-prod').textContent   = listaPrec.length;
-  document.getElementById('cmv-medio').textContent        = cmvMedio.toFixed(1)+'%';
-  document.getElementById('cmv-maior-margem').textContent = (melhor?.lucro_pct.toFixed(1)||'—')+'%';
-  document.getElementById('cmv-menor-margem').textContent = (pior?.lucro_pct.toFixed(1)||'—')+'%';
-  const tabAtiva = document.querySelector('#page-cmv .tab.active');
-  switchPrecTab('loja', tabAtiva);
+  const _set = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+  _set('cmv-total-prod',   listaPrec.length);
+  _set('cmv-medio',        cmvMedio.toFixed(1)+'%');
+  _set('cmv-maior-margem', (melhor?.lucro_pct.toFixed(1)||'—')+'%');
+  _set('cmv-menor-margem', (pior?.lucro_pct.toFixed(1)||'—')+'%');
+
+  _precRenderCanal(PREC_TABS[0].id);
 }
 
-
-function switchPrecTab(tab, btn) {
-  ['loja','ifood','transferencia'].forEach(t => {
-    const p = document.getElementById('prec-painel-' + t);
-    if (p) p.style.display = t === tab ? '' : 'none';
+function switchPrecTab(canalId, btn) {
+  PREC_TABS.forEach(t => {
+    const p = document.getElementById('prec-painel-' + t.id);
+    if (p) p.style.display = t.id === canalId ? '' : 'none';
   });
-  // Atualiza classes das abas
   if (btn) {
     btn.closest('.tabs')?.querySelectorAll('.tab').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
   }
-  if (tab === 'loja')         renderTabelaLoja();
-  if (tab === 'ifood')        renderTabelaIfood();
-  if (tab === 'transferencia') renderTabelaTransferencia();
+  _precRenderCanal(canalId);
 }
+
+function _precRenderCanal(canalId) {
+  const tab = PREC_TABS.find(t => t.id === canalId);
+  if (!tab) return;
+  if (tab.type === 'markup') return _renderTabelaMarkup(canalId);
+  return _renderTabelaCalc(canalId);
+}
+
+function _renderTabelaCalc(canal) {
+  const el = document.getElementById('prec-painel-' + canal);
+  if (!el) return;
+  const tab = PREC_TABS.find(t => t.id === canal);
+  el.innerHTML = _painelParamsPrec(canal) + _tabelaPrecPorCategoria(canal, tab.label, '', null);
+}
+
+function _renderTabelaMarkup(canal) {
+  const el = document.getElementById('prec-painel-' + canal);
+  if (!el) return;
+  const cfg = PREC_CONFIG[canal] || {};
+  const markup_pct = cfg.markup_pct ?? (canal === 'revenda' ? 30 : 20);
+
+  const todosProdutos = _fichasParaPrec();
+  if (todosProdutos.length === 0) {
+    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-light)">
+      <div style="font-size:32px;margin-bottom:8px">📋</div>
+      <div style="font-weight:700">Nenhuma ficha técnica cadastrada</div>
+    </div>`;
+    return;
+  }
+
+  const busca = (document.getElementById('busca-prec-' + canal)?.value || '').toLowerCase();
+  const filtrados = busca ? todosProdutos.filter(p => p.nome.toLowerCase().includes(busca)) : todosProdutos;
+  const catOrder = [...new Set(fichas.filter(f => !_isReceitaBase(f.categoria)).map(f => f.categoria))];
+  const porCat = {};
+  filtrados.forEach(p => {
+    const ficha = fichas.find(f => f.nome.toUpperCase() === p.nome.toUpperCase());
+    const cat = ficha?.categoria || 'Outros';
+    if (!porCat[cat]) porCat[cat] = [];
+    porCat[cat].push(p);
+  });
+
+  const _R2 = v => v > 0 ? 'R$ ' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
+  const colTitulo = canal === 'revenda' ? 'Preço de Revenda' : 'Preço de Transferência';
+
+  const secoes = catOrder
+    .filter(cat => porCat[cat] && porCat[cat].length > 0)
+    .map(cat => {
+      const cor = _COR_CAT[cat] || '#E8AFA3';
+      const emoji = _EMOJI_CAT[cat] || '🎂';
+      const itens = porCat[cat];
+      const linhas = itens.map(p => {
+        const cmv = _cmvDaFicha(p.nome);
+        const precoCalc = cmv > 0 ? cmv * (1 + markup_pct / 100) : 0;
+        const corCMV = cmv === 0 ? 'var(--text-light)' : 'var(--cinza-azul-dark)';
+        return `<tr style="border-top:1px solid rgba(232,175,163,.1)">
+          <td style="padding:8px 14px;font-weight:700;color:var(--marrom)">${p.nome}</td>
+          <td style="text-align:right;padding:8px 10px;font-weight:600;color:${corCMV}">${_R2(cmv)}</td>
+          <td style="text-align:right;padding:8px 10px;font-weight:700;color:var(--success)">${precoCalc > 0 ? _R2(precoCalc) : '—'}</td>
+        </tr>`;
+      }).join('');
+      return `<div class="card" style="margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${cor}44">
+          <span style="font-size:20px">${emoji}</span>
+          <span style="font-size:15px;font-weight:800;color:var(--marrom)">${cat}</span>
+          <span style="font-size:11px;color:var(--text-light);background:${cor}22;border-radius:5px;padding:2px 7px;font-weight:700">${itens.length} produto${itens.length !== 1 ? 's' : ''}</span>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Produto</th><th style="text-align:right">CMV (ficha)</th><th style="text-align:right">${colTitulo}</th></tr></thead>
+            <tbody>${linhas}</tbody>
+          </table>
+        </div>
+      </div>`;
+    }).join('');
+
+  const mS = "width:120px;padding:8px 12px;border:1.5px solid rgba(212,168,64,.4);border-radius:10px;font-size:18px;font-weight:800;color:var(--marrom);background:rgba(212,168,64,.04);outline:none;text-align:center";
+  const helpText = canal === 'revenda'
+    ? 'Markup B2B aplicado sobre o CMV — venda no atacado para outras lojas, restaurantes ou cafeterias.'
+    : 'Markup aplicado sobre o CMV para venda entre as 3 lojas do grupo.';
+
+  const paramsCard = `<div class="card" style="margin-bottom:14px;background:linear-gradient(135deg,rgba(212,168,64,.05),rgba(232,175,163,.04));border:1.5px solid rgba(212,168,64,.22)">
+    <div class="section-title" style="margin-bottom:12px">⚙️ Parâmetros</div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+      <label style="font-size:13px;font-weight:700;color:var(--marrom)">Markup sobre CMV:</label>
+      <input type="number" value="${markup_pct}" min="0" max="500" step="0.5"
+        onchange="_atualizarConfigPrec('${canal}','markup_pct',this.value)"
+        style="${mS}">
+      <span style="font-size:18px;font-weight:800;color:var(--marrom)">%</span>
+      <div style="font-size:12px;color:var(--text-light);margin-left:auto;max-width:480px">${helpText}<br>Fórmula: <b style="color:var(--marrom)">CMV × (1 + ${markup_pct}%)</b></div>
+    </div>
+  </div>`;
+
+  const searchBar = `<div class="card" style="margin-bottom:14px;padding:12px 18px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <input type="text" id="busca-prec-${canal}" placeholder="🔍 Buscar produto..." value="${busca}"
+        oninput="_renderTabelaMarkup('${canal}')"
+        style="flex:1;padding:9px 14px;border:1.5px solid var(--rosa-light);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;outline:none">
+      <span style="font-size:13px;color:var(--text-light);font-weight:600;white-space:nowrap">${filtrados.length} produto${filtrados.length !== 1 ? 's' : ''}</span>
+    </div>
+  </div>`;
+
+  el.innerHTML = paramsCard + searchBar + secoes;
+}
+
+// Compat: wrappers das funções antigas
+function renderTabelaLoja()         { _precRenderCanal('loja_funcionarios'); }
+function renderTabelaIfood()        { _precRenderCanal('ifood_funcionarios'); }
+function renderTabelaTransferencia(){ _precRenderCanal('transferencia'); }
 
 function statusLucro(pct) {
   if (pct >= 40) return ['badge-green','Ótimo'];
@@ -10829,157 +10944,6 @@ function _tabelaPrecPorCategoria(canal, tituloCanal, extraHead, extraCell) {
   </div>`;
 
   return searchBar + secoes;
-}
-
-function renderTabelaLoja() {
-  const el = document.getElementById('prec-painel-loja');
-  if (!el) return;
-  // Se em contexto de loja: mostra banner de margem da loja antes da tabela
-  let bannerMargem = '';
-  if (_contextoAtual?.tipo === 'loja') {
-    const lojaId = _contextoAtual.id;
-    const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
-    const margem = margens[lojaId] ?? 15;
-    bannerMargem = `
-      <div class="card" style="margin-bottom:16px;padding:16px 20px;background:linear-gradient(135deg,#FDF0EE,#FFF7F2);border:1.5px solid rgba(232,175,163,.4)">
-        <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
-          <div style="flex:1">
-            <div style="font-size:13px;font-weight:800;color:#5C3D2E">📊 Margem padrão da loja — ${_contextoAtual.emoji} ${_contextoAtual.nome}</div>
-            <div style="font-size:12px;color:#A89A94;margin-top:2px">Aplicada sobre o custo de produção de todos os produtos desta loja</div>
-          </div>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input type="number" id="input-margem-loja" value="${margem}" min="0" max="200" step="1"
-              style="width:72px;padding:8px 10px;border:2px solid #E8AFA3;border-radius:10px;font-size:18px;font-weight:800;color:#5C3D2E;text-align:center"
-              oninput="_salvarMargemLoja(this.value)">
-            <span style="font-size:20px;font-weight:800;color:#E85D75">%</span>
-          </div>
-        </div>
-      </div>`;
-  }
-  el.innerHTML = bannerMargem + _painelParamsPrec('loja') + _tabelaPrecPorCategoria('loja', '🏪 Loja', '', null);
-}
-
-function _salvarMargemLoja(valor) {
-  if (!_contextoAtual?.id) return;
-  const margens = JSON.parse(localStorage.getItem('_margemLoja') || '{}');
-  margens[_contextoAtual.id] = parseFloat(valor) || 0;
-  localStorage.setItem('_margemLoja', JSON.stringify(margens));
-  // Recalcula tabela após pequeno delay
-  clearTimeout(_salvarMargemLoja._t);
-  _salvarMargemLoja._t = setTimeout(renderTabelaLoja, 600);
-}
-
-function renderTabelaIfood() {
-  const el = document.getElementById('prec-painel-ifood');
-  if (!el) return;
-  el.innerHTML = _painelParamsPrec('ifood') + _tabelaPrecPorCategoria('ifood', '🛵 iFood', '', null);
-}
-
-// ── Precificação: Transferência entre Lojas ───────────────────────────────────
-function renderTabelaTransferencia() {
-  const el = document.getElementById('prec-painel-transferencia');
-  if (!el) return;
-
-  const cfg        = PREC_CONFIG.transferencia || {};
-  const markup_pct = cfg.markup_pct ?? 20;
-
-  const todosProdutos = _fichasParaPrec();
-  if (todosProdutos.length === 0) {
-    el.innerHTML = `<div class="card" style="text-align:center;padding:40px;color:var(--text-light)">
-      <div style="font-size:32px;margin-bottom:8px">📋</div>
-      <div style="font-weight:700">Nenhuma ficha técnica cadastrada</div>
-      <div style="font-size:13px;margin-top:4px">Crie fichas técnicas para ver a precificação aqui</div>
-    </div>`;
-    return;
-  }
-
-  const busca     = (document.getElementById('busca-prec-transferencia')?.value || '').toLowerCase();
-  const filtrados = busca ? todosProdutos.filter(p => p.nome.toLowerCase().includes(busca)) : todosProdutos;
-
-  // Agrupa por categoria (mesma ordem das fichas)
-  const catOrder = [...new Set(fichas.filter(f => !_isReceitaBase(f.categoria)).map(f => f.categoria))];
-  const porCat   = {};
-  filtrados.forEach(p => {
-    const ficha = fichas.find(f => f.nome.toUpperCase() === p.nome.toUpperCase());
-    const cat   = ficha?.categoria || 'Outros';
-    if (!porCat[cat]) porCat[cat] = [];
-    porCat[cat].push(p);
-  });
-
-  const _R2 = v => v > 0 ? 'R$\u00a0' + v.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '—';
-
-  const secoes = catOrder
-    .filter(cat => porCat[cat] && porCat[cat].length > 0)
-    .map(cat => {
-      const cor   = _COR_CAT[cat]   || '#E8AFA3';
-      const emoji = _EMOJI_CAT[cat] || '🎂';
-      const itens = porCat[cat];
-
-      const linhas = itens.map(p => {
-        const cmv         = _cmvDaFicha(p.nome);
-        const precoTransf = cmv > 0 ? cmv * (1 + markup_pct / 100) : 0;
-        const corCMV      = cmv === 0 ? 'var(--text-light)' : 'var(--cinza-azul-dark)';
-        return `<tr style="border-top:1px solid rgba(232,175,163,.1)">
-          <td style="padding:8px 14px;font-weight:700;color:var(--marrom)">${p.nome}</td>
-          <td style="text-align:right;padding:8px 10px;font-weight:600;color:${corCMV}">${_R2(cmv)}</td>
-          <td style="text-align:right;padding:8px 10px;font-weight:700;color:var(--success)">${precoTransf > 0 ? _R2(precoTransf) : '—'}</td>
-        </tr>`;
-      }).join('');
-
-      return `<div class="card" style="margin-bottom:14px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;padding-bottom:10px;border-bottom:2px solid ${cor}44">
-          <span style="font-size:20px">${emoji}</span>
-          <span style="font-size:15px;font-weight:800;color:var(--marrom)">${cat}</span>
-          <span style="font-size:11px;color:var(--text-light);background:${cor}22;border-radius:5px;padding:2px 7px;font-weight:700">${itens.length} produto${itens.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div class="table-wrap">
-          <table>
-            <thead><tr>
-              <th>Produto</th>
-              <th style="text-align:right">CMV (ficha)</th>
-              <th style="text-align:right">Preço de Transferência</th>
-            </tr></thead>
-            <tbody>${linhas}</tbody>
-          </table>
-        </div>
-      </div>`;
-    }).join('');
-
-  // Painel de parâmetro único
-  const mS = 'width:100%;padding:6px 9px;border:1.5px solid rgba(212,168,64,.4);border-radius:8px;font-size:13px;font-weight:700;color:var(--marrom);background:rgba(212,168,64,.04);outline:none;box-sizing:border-box';
-  const lS = 'display:block;font-size:10px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px';
-
-  const searchBar = `<div class="card" style="margin-bottom:14px;padding:12px 18px">
-    <div style="display:flex;align-items:center;gap:12px">
-      <input type="text" id="busca-prec-transferencia" placeholder="🔍 Buscar produto..."
-        oninput="renderTabelaTransferencia()"
-        style="flex:1;padding:9px 14px;border:1.5px solid var(--rosa-light);border-radius:10px;font-family:'Nunito',sans-serif;font-size:13px;outline:none">
-      <span style="font-size:13px;color:var(--text-light);font-weight:600;white-space:nowrap">${filtrados.length} produto${filtrados.length !== 1 ? 's' : ''}</span>
-    </div>
-  </div>`;
-
-  el.innerHTML = `
-    <div class="card" style="background:linear-gradient(135deg,rgba(212,168,64,.05),rgba(232,175,163,.04));border:1.5px solid rgba(212,168,64,.22);margin-bottom:14px">
-      <div class="section-title" style="margin-bottom:12px">⚙️ Percentual de Transferência</div>
-      <div style="display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap">
-        <div style="min-width:200px">
-          <label style="${lS}">Percentual sobre o CMV (%)</label>
-          <div style="display:flex;align-items:center;gap:8px">
-            <input type="number" value="${markup_pct}" min="0" max="500" step="0.5"
-              onchange="_atualizarConfigPrec('transferencia','markup_pct',this.value)"
-              style="${mS}">
-            <span style="font-size:14px;font-weight:800;color:var(--gold)">%</span>
-          </div>
-        </div>
-        <div style="font-size:12px;color:var(--text-light);padding-bottom:8px;line-height:1.6">
-          Fórmula: <b style="color:var(--marrom)">CMV + ${markup_pct}%</b><br>
-          Ex: se CMV = R$\u00a010,00 → transferência = R$\u00a0${(10 * (1 + markup_pct / 100)).toFixed(2).replace('.', ',')}
-        </div>
-      </div>
-    </div>
-    ${searchBar}
-    ${secoes}
-  `;
 }
 
 
