@@ -588,83 +588,89 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
   }
   .table-wrap::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge */
 
-  /* ════ Tabelas de Precificação compactas (cabem sem scroll) ════ */
-  /* Esconde colunas redundantes:
-     col 3=Fixos, 4=Impostos, 5=Taxa Cartão/iFood, 9=%CMV, 11=Status
-     (Custo+Taxas ja contem tudo, e Lucro% colorido ja indica status) */
-  [id^="prec-painel-loja_"] table th:nth-child(3),
-  [id^="prec-painel-loja_"] table th:nth-child(4),
-  [id^="prec-painel-loja_"] table th:nth-child(5),
-  [id^="prec-painel-loja_"] table th:nth-child(9),
-  [id^="prec-painel-loja_"] table th:nth-child(11),
-  [id^="prec-painel-loja_"] table td:nth-child(3),
-  [id^="prec-painel-loja_"] table td:nth-child(4),
-  [id^="prec-painel-loja_"] table td:nth-child(5),
-  [id^="prec-painel-loja_"] table td:nth-child(9),
-  [id^="prec-painel-loja_"] table td:nth-child(11),
-  [id^="prec-painel-ifood_"] table th:nth-child(3),
-  [id^="prec-painel-ifood_"] table th:nth-child(4),
-  [id^="prec-painel-ifood_"] table th:nth-child(5),
-  [id^="prec-painel-ifood_"] table th:nth-child(9),
-  [id^="prec-painel-ifood_"] table th:nth-child(11),
-  [id^="prec-painel-ifood_"] table td:nth-child(3),
-  [id^="prec-painel-ifood_"] table td:nth-child(4),
-  [id^="prec-painel-ifood_"] table td:nth-child(5),
-  [id^="prec-painel-ifood_"] table td:nth-child(9),
-  [id^="prec-painel-ifood_"] table td:nth-child(11) {
-    display: none;
-  }
-  /* Layout fixo + fonte e padding bem reduzidos */
+  /* ════ Tabelas de Precificação compactas — todas as colunas visíveis ════ */
   [id^="prec-painel-loja_"] table,
   [id^="prec-painel-ifood_"] table {
-    font-size: 11px;
+    font-size: 10.5px;
     table-layout: fixed;
     width: 100%;
   }
-  /* Larguras explicitas pra cada coluna visivel:
-     1=Produto(flex), 2=CMV, 6=Taxa(escondida), 7=Custo+Taxas, 8=Preco, 10=Sugerido, 12=Lucro%, 13=Acao */
+  /* Larguras explícitas (1=Produto, 2=CMV, 3=Fixos, 4=Impostos, 5=Taxa,
+     6=Custo+Taxas, 7=Preço, 8=Sugerido, 9=%CMV, 10=Lucro%, 11=Status, 12=Ação) */
   [id^="prec-painel-loja_"] table th:nth-child(1),
   [id^="prec-painel-ifood_"] table th:nth-child(1) { width: auto; }
   [id^="prec-painel-loja_"] table th:nth-child(2),
-  [id^="prec-painel-ifood_"] table th:nth-child(2) { width: 62px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(2),
+  [id^="prec-painel-loja_"] table th:nth-child(3),
+  [id^="prec-painel-ifood_"] table th:nth-child(3),
+  [id^="prec-painel-loja_"] table th:nth-child(4),
+  [id^="prec-painel-ifood_"] table th:nth-child(4) { width: 50px; }
+  [id^="prec-painel-loja_"] table th:nth-child(5),
+  [id^="prec-painel-ifood_"] table th:nth-child(5),
+  [id^="prec-painel-loja_"] table th:nth-child(6),
+  [id^="prec-painel-ifood_"] table th:nth-child(6) { width: 60px; }
   [id^="prec-painel-loja_"] table th:nth-child(7),
-  [id^="prec-painel-ifood_"] table th:nth-child(7) { width: 78px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(7),
   [id^="prec-painel-loja_"] table th:nth-child(8),
-  [id^="prec-painel-ifood_"] table th:nth-child(8) { width: 78px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(8) { width: 70px; }
+  [id^="prec-painel-loja_"] table th:nth-child(9),
+  [id^="prec-painel-ifood_"] table th:nth-child(9),
   [id^="prec-painel-loja_"] table th:nth-child(10),
-  [id^="prec-painel-ifood_"] table th:nth-child(10) { width: 80px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(10) { width: 50px; }
+  [id^="prec-painel-loja_"] table th:nth-child(11),
+  [id^="prec-painel-ifood_"] table th:nth-child(11) { width: 70px; }
   [id^="prec-painel-loja_"] table th:nth-child(12),
-  [id^="prec-painel-ifood_"] table th:nth-child(12) { width: 64px; }
-  [id^="prec-painel-loja_"] table th:nth-child(13),
-  [id^="prec-painel-ifood_"] table th:nth-child(13) { width: 28px; }
+  [id^="prec-painel-ifood_"] table th:nth-child(12) { width: 26px; }
   [id^="prec-painel-loja_"] table thead th,
   [id^="prec-painel-ifood_"] table thead th {
-    padding: 6px 4px !important;
-    font-size: 9.5px !important;
+    padding: 6px 3px !important;
+    font-size: 9px !important;
     letter-spacing: 0;
+    line-height: 1.15;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
   [id^="prec-painel-loja_"] table tbody td,
   [id^="prec-painel-ifood_"] table tbody td {
-    padding: 5px 4px !important;
+    padding: 5px 3px !important;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
-  /* Coluna Produto pode quebrar em 2 linhas se for muito grande */
   [id^="prec-painel-loja_"] table tbody td:nth-child(1),
   [id^="prec-painel-ifood_"] table tbody td:nth-child(1) {
     white-space: normal;
     word-break: break-word;
-    line-height: 1.25;
+    line-height: 1.2;
+    padding-left: 8px !important;
   }
   [id^="prec-painel-loja_"] table input[type="number"],
   [id^="prec-painel-ifood_"] table input[type="number"] {
     width: 100% !important;
-    max-width: 70px;
-    font-size: 11px !important;
+    max-width: 65px;
+    font-size: 10.5px !important;
     padding: 3px 4px !important;
   }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  [id^="prec-painel-loja_"] table .badge,
+  [id^="prec-painel-ifood_"] table .badge {
+    font-size: 9.5px !important;
+    padding: 1px 4px !important;
+  }
+  /* Toggle de colunas: classe na <table> esconde a coluna correspondente */
+  table.h-cmv th:nth-child(2), table.h-cmv td:nth-child(2),
+  table.h-fixos th:nth-child(3), table.h-fixos td:nth-child(3),
+  table.h-impostos th:nth-child(4), table.h-impostos td:nth-child(4),
+  table.h-taxa th:nth-child(5), table.h-taxa td:nth-child(5),
+  table.h-custotaxas th:nth-child(6), table.h-custotaxas td:nth-child(6),
+  table.h-preco th:nth-child(7), table.h-preco td:nth-child(7),
+  table.h-sugerido th:nth-child(8), table.h-sugerido td:nth-child(8),
+  table.h-cmvpct th:nth-child(9), table.h-cmvpct td:nth-child(9),
+  table.h-lucropct th:nth-child(10), table.h-lucropct td:nth-child(10),
+  table.h-status th:nth-child(11), table.h-status td:nth-child(11) {
+    display: none !important;
+  }
+
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th {
     background: #FAF6F1;
     color: var(--text-light);
@@ -10820,7 +10826,57 @@ function _renderTabelaCalc(canal) {
   const el = document.getElementById('prec-painel-' + canal);
   if (!el) return;
   const tab = PREC_TABS.find(t => t.id === canal);
-  el.innerHTML = _painelParamsPrec(canal) + _bannerOcultos(canal) + _tabelaPrecPorCategoria(canal, tab.label, '', null);
+  el.innerHTML = _painelParamsPrec(canal) + _toggleColunasUI(canal) + _bannerOcultos(canal) + _tabelaPrecPorCategoria(canal, tab.label, '', null);
+  // Aplica classes de coluna oculta nas tabelas geradas
+  const ocultas = _precColunasOcultas(canal);
+  el.querySelectorAll('table').forEach(t => {
+    ocultas.forEach(c => t.classList.add('h-' + c));
+  });
+}
+
+// ── Toggle de colunas por canal ───────────────────────────────────────────
+const _PREC_COLUNAS_DEFINICAO = [
+  { id: 'cmv',         label: 'CMV',         default: true  },
+  { id: 'fixos',       label: 'Fixos',       default: true  },
+  { id: 'impostos',    label: 'Impostos',    default: true  },
+  { id: 'taxa',        label: 'Taxa',        default: true  },
+  { id: 'custotaxas',  label: 'Custo+Taxas', default: true  },
+  { id: 'preco',       label: 'Preço',       default: true  },
+  { id: 'sugerido',    label: 'Sugerido',    default: true  },
+  { id: 'cmvpct',      label: '% CMV',       default: false },
+  { id: 'lucropct',    label: 'Lucro %',     default: true  },
+  { id: 'status',      label: 'Status',      default: false },
+];
+function _precColunasOcultas(canal) {
+  try {
+    const all = JSON.parse(localStorage.getItem('_precColunas') || '{}');
+    if (all[canal] !== undefined) return all[canal];
+  } catch(e) {}
+  return _PREC_COLUNAS_DEFINICAO.filter(c => !c.default).map(c => c.id);
+}
+function _precToggleColuna(canal, colunaId) {
+  const all = JSON.parse(localStorage.getItem('_precColunas') || '{}');
+  const set = new Set(_precColunasOcultas(canal));
+  if (set.has(colunaId)) set.delete(colunaId); else set.add(colunaId);
+  all[canal] = [...set];
+  localStorage.setItem('_precColunas', JSON.stringify(all));
+  _precRenderCanal(canal);
+}
+function _toggleColunasUI(canal) {
+  const ocultas = new Set(_precColunasOcultas(canal));
+  const visiveis = _PREC_COLUNAS_DEFINICAO.length - ocultas.size;
+  const checks = _PREC_COLUNAS_DEFINICAO.map(c => `
+    <label style="display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border:1.5px solid ${ocultas.has(c.id)?'rgba(0,0,0,.1)':'rgba(232,175,163,.45)'};border-radius:8px;font-size:11px;font-weight:600;color:${ocultas.has(c.id)?'var(--text-light)':'var(--marrom)'};cursor:pointer;background:${ocultas.has(c.id)?'transparent':'rgba(232,175,163,.08)'}">
+      <input type="checkbox" ${ocultas.has(c.id)?'':'checked'} onchange="_precToggleColuna('${canal}','${c.id}')" style="margin:0;accent-color:#E8AFA3;cursor:pointer">
+      ${c.label}
+    </label>
+  `).join('');
+  return `<div class="card" style="margin-bottom:12px;padding:10px 14px">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <span style="font-size:11px;font-weight:700;color:var(--text-light);text-transform:uppercase;letter-spacing:.05em">👁 Colunas (${visiveis} visíveis)</span>
+      ${checks}
+    </div>
+  </div>`;
 }
 
 // Banner mostrado no topo quando há produtos ocultos nesta aba
