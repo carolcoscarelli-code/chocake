@@ -10548,7 +10548,14 @@ function _fixosPct(canal) {
 // Calcula linha completa para qualquer produto/canal
 function _calcLinha(nome, canal, precoFallback) {
   const cfg            = PREC_CONFIG[canal] || PREC_CONFIG.loja_funcionarios || PREC_CONFIG.loja || {};
-  const cmv            = _cmvDaFicha(nome);
+  // Lojas filiais (Vila da Serra e Sion) recebem produtos da matriz pagando preço
+  // de transferência. Por isso, o "CMV" delas para cálculo de precificação é o
+  // CMV de produção × (1 + markup de transferência).
+  const _LOJAS_FILIAIS = new Set(['loja_viladaserra', 'ifood_viladaserra', 'ifood_sion']);
+  const cmvProducao    = _cmvDaFicha(nome);
+  const cmv            = _LOJAS_FILIAIS.has(canal)
+    ? cmvProducao * (1 + ((PREC_CONFIG.transferencia?.markup_pct ?? 20) / 100))
+    : cmvProducao;
   const fixos_pct      = _fixosPct(canal);
   const impostos_pct   = cfg.impostos_pct   || 0;
   const tipo           = _canalBase(canal);
