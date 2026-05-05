@@ -587,6 +587,49 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     -ms-overflow-style: none;       /* IE/Edge legado */
   }
   .table-wrap::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge */
+
+  /* ════ Tabelas de Precificação compactas (cabem sem scroll) ════ */
+  /* Esconde colunas redundantes (Fixos, Impostos, Taxa) - o total
+     ja aparece em Custo+Taxas e o detalhe esta no card de Parametros */
+  [id^="prec-painel-loja_"] table th:nth-child(3),
+  [id^="prec-painel-loja_"] table th:nth-child(4),
+  [id^="prec-painel-loja_"] table th:nth-child(5),
+  [id^="prec-painel-loja_"] table td:nth-child(3),
+  [id^="prec-painel-loja_"] table td:nth-child(4),
+  [id^="prec-painel-loja_"] table td:nth-child(5),
+  [id^="prec-painel-ifood_"] table th:nth-child(3),
+  [id^="prec-painel-ifood_"] table th:nth-child(4),
+  [id^="prec-painel-ifood_"] table th:nth-child(5),
+  [id^="prec-painel-ifood_"] table td:nth-child(3),
+  [id^="prec-painel-ifood_"] table td:nth-child(4),
+  [id^="prec-painel-ifood_"] table td:nth-child(5) {
+    display: none;
+  }
+  /* Reduz padding e font-size para caber sem scroll */
+  [id^="prec-painel-loja_"] table,
+  [id^="prec-painel-ifood_"] table {
+    font-size: 12px;
+  }
+  [id^="prec-painel-loja_"] table thead th,
+  [id^="prec-painel-ifood_"] table thead th {
+    padding: 8px 6px !important;
+    font-size: 10px !important;
+  }
+  [id^="prec-painel-loja_"] table tbody td,
+  [id^="prec-painel-ifood_"] table tbody td {
+    padding: 6px 6px !important;
+  }
+  [id^="prec-painel-loja_"] table input[type="number"],
+  [id^="prec-painel-ifood_"] table input[type="number"] {
+    width: 56px !important;
+    font-size: 12px !important;
+    padding: 3px 5px !important;
+  }
+  [id^="prec-painel-loja_"] table .badge,
+  [id^="prec-painel-ifood_"] table .badge {
+    font-size: 10.5px !important;
+    padding: 2px 6px !important;
+  }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th {
     background: #FAF6F1;
