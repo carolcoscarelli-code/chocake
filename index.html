@@ -589,46 +589,80 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
   .table-wrap::-webkit-scrollbar { display: none; } /* Chrome/Safari/Edge */
 
   /* ════ Tabelas de Precificação compactas (cabem sem scroll) ════ */
-  /* Esconde colunas redundantes (Fixos, Impostos, Taxa) - o total
-     ja aparece em Custo+Taxas e o detalhe esta no card de Parametros */
+  /* Esconde colunas redundantes:
+     col 3=Fixos, 4=Impostos, 5=Taxa Cartão/iFood, 9=%CMV, 11=Status
+     (Custo+Taxas ja contem tudo, e Lucro% colorido ja indica status) */
   [id^="prec-painel-loja_"] table th:nth-child(3),
   [id^="prec-painel-loja_"] table th:nth-child(4),
   [id^="prec-painel-loja_"] table th:nth-child(5),
+  [id^="prec-painel-loja_"] table th:nth-child(9),
+  [id^="prec-painel-loja_"] table th:nth-child(11),
   [id^="prec-painel-loja_"] table td:nth-child(3),
   [id^="prec-painel-loja_"] table td:nth-child(4),
   [id^="prec-painel-loja_"] table td:nth-child(5),
+  [id^="prec-painel-loja_"] table td:nth-child(9),
+  [id^="prec-painel-loja_"] table td:nth-child(11),
   [id^="prec-painel-ifood_"] table th:nth-child(3),
   [id^="prec-painel-ifood_"] table th:nth-child(4),
   [id^="prec-painel-ifood_"] table th:nth-child(5),
+  [id^="prec-painel-ifood_"] table th:nth-child(9),
+  [id^="prec-painel-ifood_"] table th:nth-child(11),
   [id^="prec-painel-ifood_"] table td:nth-child(3),
   [id^="prec-painel-ifood_"] table td:nth-child(4),
-  [id^="prec-painel-ifood_"] table td:nth-child(5) {
+  [id^="prec-painel-ifood_"] table td:nth-child(5),
+  [id^="prec-painel-ifood_"] table td:nth-child(9),
+  [id^="prec-painel-ifood_"] table td:nth-child(11) {
     display: none;
   }
-  /* Reduz padding e font-size para caber sem scroll */
+  /* Layout fixo + fonte e padding bem reduzidos */
   [id^="prec-painel-loja_"] table,
   [id^="prec-painel-ifood_"] table {
-    font-size: 12px;
+    font-size: 11px;
+    table-layout: fixed;
+    width: 100%;
   }
+  /* Larguras explicitas pra cada coluna visivel:
+     1=Produto(flex), 2=CMV, 6=Taxa(escondida), 7=Custo+Taxas, 8=Preco, 10=Sugerido, 12=Lucro%, 13=Acao */
+  [id^="prec-painel-loja_"] table th:nth-child(1),
+  [id^="prec-painel-ifood_"] table th:nth-child(1) { width: auto; }
+  [id^="prec-painel-loja_"] table th:nth-child(2),
+  [id^="prec-painel-ifood_"] table th:nth-child(2) { width: 62px; }
+  [id^="prec-painel-loja_"] table th:nth-child(7),
+  [id^="prec-painel-ifood_"] table th:nth-child(7) { width: 78px; }
+  [id^="prec-painel-loja_"] table th:nth-child(8),
+  [id^="prec-painel-ifood_"] table th:nth-child(8) { width: 78px; }
+  [id^="prec-painel-loja_"] table th:nth-child(10),
+  [id^="prec-painel-ifood_"] table th:nth-child(10) { width: 80px; }
+  [id^="prec-painel-loja_"] table th:nth-child(12),
+  [id^="prec-painel-ifood_"] table th:nth-child(12) { width: 64px; }
+  [id^="prec-painel-loja_"] table th:nth-child(13),
+  [id^="prec-painel-ifood_"] table th:nth-child(13) { width: 28px; }
   [id^="prec-painel-loja_"] table thead th,
   [id^="prec-painel-ifood_"] table thead th {
-    padding: 8px 6px !important;
-    font-size: 10px !important;
+    padding: 6px 4px !important;
+    font-size: 9.5px !important;
+    letter-spacing: 0;
   }
   [id^="prec-painel-loja_"] table tbody td,
   [id^="prec-painel-ifood_"] table tbody td {
-    padding: 6px 6px !important;
+    padding: 5px 4px !important;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  /* Coluna Produto pode quebrar em 2 linhas se for muito grande */
+  [id^="prec-painel-loja_"] table tbody td:nth-child(1),
+  [id^="prec-painel-ifood_"] table tbody td:nth-child(1) {
+    white-space: normal;
+    word-break: break-word;
+    line-height: 1.25;
   }
   [id^="prec-painel-loja_"] table input[type="number"],
   [id^="prec-painel-ifood_"] table input[type="number"] {
-    width: 56px !important;
-    font-size: 12px !important;
-    padding: 3px 5px !important;
-  }
-  [id^="prec-painel-loja_"] table .badge,
-  [id^="prec-painel-ifood_"] table .badge {
-    font-size: 10.5px !important;
-    padding: 2px 6px !important;
+    width: 100% !important;
+    max-width: 70px;
+    font-size: 11px !important;
+    padding: 3px 4px !important;
   }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
   thead th {
