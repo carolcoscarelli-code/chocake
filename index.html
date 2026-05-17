@@ -5163,14 +5163,15 @@ function _normalizarLojaPlanilha(nomePlanilha) {
 }
 
 // Helper: descobre o canal a partir do tipo de faturamento da planilha
+// IMPORTANTE: 'transfer' DEVE vir antes de 'loja' porque 'transferencia entre lojas' inclui 'loja'
 function _canalDoTipoFaturamento(tipoStr) {
   if (!tipoStr) return null;
   const t = String(tipoStr).toLowerCase();
-  if (t.includes('loja'))         return 'Loja';
+  if (t.includes('transfer'))     return 'Transferência';
   if (t.includes('delivery'))     return 'Delivery';
   if (t.includes('encomenda'))    return 'Encomenda';
   if (t.includes('revenda'))      return 'Revenda';
-  if (t.includes('transfer'))     return 'Transferência';
+  if (t.includes('loja'))         return 'Loja';
   if (t.includes('empréstimo') || t.includes('emprestimo')) return 'Empréstimo';
   if (t.includes('outras'))       return 'Outras Entradas';
   return null;
@@ -5531,14 +5532,13 @@ function impPlanilhaConfirmar() {
     // Salva de volta
     try { localStorage.setItem(fluxoKey, JSON.stringify(fluxoArr)); } catch(e) {}
     try {
-      // Comprime vendas pra economizar storage (igual ao AppStorage)
-      const str = JSON.stringify(vendasArr);
-      if (typeof LZString !== 'undefined' && str.length > 5000) {
-        localStorage.setItem(vendasKey, 'lz:' + LZString.compressToBase64(str));
-      } else {
-        localStorage.setItem(vendasKey, str);
-      }
-    } catch(e) {}
+      // Salva como JSON plain (LZString.compressToBase64 + decompressFromBase64
+      // mostrou-se nao confiavel para alguns conjuntos de dados — round-trip
+      // pode retornar string vazia silenciosamente)
+      localStorage.setItem(vendasKey, JSON.stringify(vendasArr));
+    } catch(e) {
+      console.warn('Erro salvando vendas:', e && e.message);
+    }
   });
 
   // Atualiza variaveis globais se a loja ativa foi afetada
