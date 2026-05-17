@@ -4974,13 +4974,19 @@ const LOJAS_CONFIG = [
 
 // Chaves isoladas por loja (todas as outras são compartilhadas entre lojas)
 const _PER_LOJA_KEYS = new Set([
-  'vendas','fluxoLancamentos','encomendas','cardapio',
-  'cardapioCatOrder','cardapioCatColapsadas',
-  'clientes','custosFixosPorLoja','custosFixos','custosVariaveis','peConfig',
+  // Vendas / financeiro
+  'vendas','fluxoLancamentos','encomendas','clientes',
+  'custosFixosPorLoja','custosFixos','custosVariaveis','peConfig',
   'notasFiscais','contasBancarias','extratoLancamentos',
+  // RH
   'rhColaboradores','rhPonto','rhDesligamentos','rhDocs',
-  'mktPosts','mktMetricas',
-  'registrosTemp','pedidosRep'   // Processos & Padrões — isolado por loja
+  // Marketing
+  'mktPosts','mktMetricas','mktParcerias','mktCampanhas','mktTrafego',
+  // Processos & operacional
+  'registrosTemp','pedidosRep','registrosLimp','popsData','orgRotinas',
+  // PDV Revenda (contas a fechar por mes)
+  'contasRevenda'
+  // Cardapio + Fichas tecnicas + insumos = GLOBAL (compartilhados)
 ]);
 
 // Loja correntemente ativa
@@ -4991,7 +4997,7 @@ function _lKey(k) {
   return _PER_LOJA_KEYS.has(k) ? `_L_${_lojaAtiva}_${k}` : k;
 }
 
-// ── Migração única: move dados sem prefixo → namespace da loja Funcionários ──
+// Migracao V1: move dados sem prefixo -> namespace da loja Funcionarios
 (function _migrarDadosParaLojaV1() {
   if (localStorage.getItem('_migracaoLojaV1')) return;
   _PER_LOJA_KEYS.forEach(k => {
@@ -5002,6 +5008,35 @@ function _lKey(k) {
     }
   });
   localStorage.setItem('_migracaoLojaV1', '1');
+})();
+
+// Migracao V2: cardapio passou de per-loja a global
+// + chaves recem-isoladas (registrosLimp/popsData/orgRotinas/mktParcerias/...)
+// passam de global a per-loja (matriz e dona dos dados antigos)
+(function _migrarDadosParaLojaV2() {
+  if (localStorage.getItem('_migracaoLojaV2')) return;
+  try {
+    // A. Cardapio: era per-loja, agora e global
+    //    Promove _L_funcionarios_cardapio (matriz) para chave global
+    const promote = ['cardapio','cardapioCatOrder','cardapioCatColapsadas'];
+    promote.forEach(k => {
+      const fromMatriz = localStorage.getItem(`_L_funcionarios_${k}`);
+      if (fromMatriz !== null && !localStorage.getItem(k)) {
+        localStorage.setItem(k, fromMatriz);
+      }
+    });
+    // B. Chaves que viraram per-loja: copia global -> matriz
+    const demote = ['registrosLimp','popsData','orgRotinas',
+                    'mktParcerias','mktCampanhas','mktTrafego'];
+    demote.forEach(k => {
+      const fromGlobal = localStorage.getItem(k);
+      const destMatriz = `_L_funcionarios_${k}`;
+      if (fromGlobal !== null && !localStorage.getItem(destMatriz)) {
+        localStorage.setItem(destMatriz, fromGlobal);
+      }
+    });
+  } catch(e) { console.warn('_migrarDadosParaLojaV2 erro:', e && e.message); }
+  localStorage.setItem('_migracaoLojaV2', '1');
 })();
 
 const AppStorage = {
@@ -5351,18 +5386,19 @@ let RATEIO_CONFIG         = JSON.parse(localStorage.getItem('rateioConfig') || '
 // ════════════════════════════════════════════════════════════════════════════
 // CARDÁPIO
 // ════════════════════════════════════════════════════════════════════════════
-let CARDAPIO = JSON.parse(localStorage.getItem(_lKey('cardapio')) || '[]');
+let CARDAPIO = JSON.parse(localStorage.getItem('cardapio') || '[]');  // GLOBAL (compartilhado entre lojas)
 
 function salvarCardapio() {
-  try { localStorage.setItem(_lKey('cardapio'), JSON.stringify(CARDAPIO)); } catch(e) {}
-  // Sincroniza o cardápio com o Firestore no formato que o PDV lê:
-  //   chocake_sync/_L_{lojaAtiva}_cardapio
+  // Cardapio e GLOBAL (compartilhado entre todas as lojas)
+  try { localStorage.setItem('cardapio', JSON.stringify(CARDAPIO)); } catch(e) {}
+  // Sincroniza com os 3 docs do Firestore que o PDV le (um por loja)
   try {
     if (typeof _fbDb !== 'undefined' && _fbDb && _fbAuth && _fbAuth.currentUser) {
-      const docId = `_L_${_lojaAtiva}_cardapio`;
-      _fbDb.collection('chocake_sync').doc(docId)
-        .set({ v: JSON.stringify(CARDAPIO), t: new Date().toISOString() })
-        .catch(e => console.warn('sync cardápio → PDV falhou:', e && e.message));
+      const payload = { v: JSON.stringify(CARDAPIO), t: new Date().toISOString() };
+      ['funcionarios','viladaserra','sion'].forEach(lojaId => {
+        _fbDb.collection('chocake_sync').doc(`_L_${lojaId}_cardapio`).set(payload)
+          .catch(e => console.warn(`sync cardapio -> PDV (${lojaId}) falhou:`, e && e.message));
+      });
     }
   } catch(e) { console.warn('salvarCardapio sync:', e && e.message); }
 }
@@ -5630,20 +5666,8 @@ function _trocarLoja(novaLoja, forcar) {
   NFS              = JSON.parse(localStorage.getItem(_lKey('notasFiscais'))      || '[]');
   CONTAS_BANC      = JSON.parse(localStorage.getItem(_lKey('contasBancarias'))   || '[]');
   EXTRATO_LANC     = JSON.parse(localStorage.getItem(_lKey('extratoLancamentos'))|| '[]');
-  CARDAPIO         = JSON.parse(localStorage.getItem(_lKey('cardapio'))          || '[]');
   vendas           = JSON.parse(AppStorage.getItem('vendas') || '[]');
-
-  // Auto-sync retroativo do cardápio com o Firestore (para o PDV standalone)
-  // Se há cardápio local e o Firebase está pronto, garante que o doc no Firestore
-  // está atualizado. Se o doc não existe ainda, cria; se existe, apenas sobrescreve.
-  if (CARDAPIO.length && typeof _fbDb !== 'undefined' && _fbDb && _fbAuth && _fbAuth.currentUser) {
-    try {
-      _fbDb.collection('chocake_sync').doc(`_L_${novaLoja}_cardapio`)
-        .set({ v: JSON.stringify(CARDAPIO), t: new Date().toISOString() })
-        .then(() => console.log(`☁️ Cardápio sincronizado com PDV (${novaLoja}): ${CARDAPIO.length} itens`))
-        .catch(e => console.warn('sync cardápio → PDV falhou:', e && e.message));
-    } catch(e) { console.warn('auto-sync cardápio:', e && e.message); }
-  }
+  // CARDAPIO permanece global (mesma referencia entre todas as lojas)
 
   // Carrega encomendas do Firestore (pode incluir itens criados no PDV standalone)
   try { _carregarEncomendasFirestore(novaLoja); } catch(e) {}
@@ -5651,6 +5675,13 @@ function _trocarLoja(novaLoja, forcar) {
   // Recarrega processos da loja
   REGISTROS_TEMP = JSON.parse(localStorage.getItem(_lKey('registrosTemp')) || '[]');
   PEDIDOS_REP    = JSON.parse(localStorage.getItem(_lKey('pedidosRep'))    || '[]');
+  REGISTROS_LIMP = JSON.parse(localStorage.getItem(_lKey('registrosLimp')) || '[]');
+  POPS_DATA      = JSON.parse(localStorage.getItem(_lKey('popsData'))      || '{}');
+  ORG_ROTINAS    = JSON.parse(localStorage.getItem(_lKey('orgRotinas'))    || '{}');
+  // Marketing per-loja
+  MKT_PARCERIAS  = JSON.parse(localStorage.getItem(_lKey('mktParcerias'))  || '[]');
+  MKT_CAMPANHAS  = JSON.parse(localStorage.getItem(_lKey('mktCampanhas'))  || '[]');
+  MKT_TRAFEGO    = JSON.parse(localStorage.getItem(_lKey('mktTrafego'))    || '[]');
 
   // Recarrega custos da loja
   try {
@@ -12141,10 +12172,10 @@ function verRuptura() {
 // CONTROLE DE LIMPEZA
 // ════════════════════════════════════════════════════════════════════════════
 
-let REGISTROS_LIMP = JSON.parse(localStorage.getItem('registrosLimp') || '[]');
+let REGISTROS_LIMP = JSON.parse(localStorage.getItem(_lKey('registrosLimp')) || '[]');
 
 function salvarLimp() {
-  try { localStorage.setItem('registrosLimp', JSON.stringify(REGISTROS_LIMP)); } catch(e) {}
+  try { localStorage.setItem(_lKey('registrosLimp'), JSON.stringify(REGISTROS_LIMP)); } catch(e) {}
 }
 
 // Captura foto de limpeza
@@ -12315,7 +12346,7 @@ function verFotoLimp(id) {
 // POPs OBRIGATÓRIOS
 // ════════════════════════════════════════════════════════════════════════════
 
-let POPS_DATA = JSON.parse(localStorage.getItem('popsData') || '{}');
+let POPS_DATA = JSON.parse(localStorage.getItem(_lKey('popsData')) || '{}');
 // Estrutura: POPS_DATA[loja][pop][secao] = [ { id, data, vencimento, foto, obs, ...extras } ]
 
 const LOJAS_POP = ['Funcionários', 'Vila da Serra', 'Sion'];
@@ -12389,7 +12420,7 @@ function initPops() {
 }
 
 function salvarPops() {
-  try { localStorage.setItem('popsData', JSON.stringify(POPS_DATA)); } catch(e) {}
+  try { localStorage.setItem(_lKey('popsData'), JSON.stringify(POPS_DATA)); } catch(e) {}
 }
 
 function switchPopLoja(loja, btn) {
@@ -12786,7 +12817,7 @@ function initPops() {
 }
 
 function salvarPops() {
-  try { localStorage.setItem('popsData', JSON.stringify(POPS_DATA)); } catch(e) {}
+  try { localStorage.setItem(_lKey('popsData'), JSON.stringify(POPS_DATA)); } catch(e) {}
 }
 
 function switchPopLoja(loja, btn) {
@@ -13814,11 +13845,11 @@ function renderVisaoLoja() {
 // ORGANOGRAMA
 // ════════════════════════════════════════════════════════════════════════════
 
-let ORG_ROTINAS = JSON.parse(localStorage.getItem('orgRotinas') || '{}');
+let ORG_ROTINAS = JSON.parse(localStorage.getItem(_lKey('orgRotinas')) || '{}');
 // ORG_ROTINAS[colab_id] = { entrada, saida, abertura:[], producao:[], fechamento:[], pops:[], metas:[] }
 
 function salvarRotinas() {
-  try { localStorage.setItem('orgRotinas', JSON.stringify(ORG_ROTINAS)); } catch(e) {}
+  try { localStorage.setItem(_lKey('orgRotinas'), JSON.stringify(ORG_ROTINAS)); } catch(e) {}
 }
 
 window._orgLoja = 'Funcionários';
@@ -14617,7 +14648,7 @@ window.onFirebaseReady = async function(user) {
   if (popsDb) {
     POPS_DATA = popsDb;
   } else {
-    const popsLocal = JSON.parse(localStorage.getItem('popsData') || '{}');
+    const popsLocal = JSON.parse(localStorage.getItem(_lKey('popsData')) || '{}');
     if (Object.keys(popsLocal).length > 0) {
       POPS_DATA = popsLocal;
       await fbSet('pops', 'dados', POPS_DATA);
@@ -15694,12 +15725,13 @@ function verNF(id) {
 // MARKETING — @chocakec
 // ════════════════════════════════════════════════════════════════════════════
 
-let MKT_PARCERIAS  = JSON.parse(localStorage.getItem('mktParcerias')  || '[]');
-let MKT_CAMPANHAS  = JSON.parse(localStorage.getItem('mktCampanhas')  || '[]');
-let MKT_TRAFEGO    = JSON.parse(localStorage.getItem('mktTrafego')    || '[]');
+let MKT_PARCERIAS  = JSON.parse(localStorage.getItem(_lKey('mktParcerias'))  || '[]');
+let MKT_CAMPANHAS  = JSON.parse(localStorage.getItem(_lKey('mktCampanhas'))  || '[]');
+let MKT_TRAFEGO    = JSON.parse(localStorage.getItem(_lKey('mktTrafego'))    || '[]');
 
 function salvarMkt(chave, dados) {
-  try { localStorage.setItem(chave, JSON.stringify(dados)); } catch(e) {}
+  // Aplica prefixo de loja se a chave for per-loja
+  try { localStorage.setItem(_lKey(chave), JSON.stringify(dados)); } catch(e) {}
 }
 
 // ── STATUS configs ────────────────────────────────────────────────────────────
