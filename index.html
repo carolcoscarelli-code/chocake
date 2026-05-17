@@ -4962,7 +4962,7 @@ var LZString=(function(){var f=String.fromCharCode;var keyStrBase64="ABCDEFGHIJK
 
 // ── AppStorage: wrapper que comprime grandes chaves automaticamente ──
 // Prefixo "lz:" indica valor comprimido com LZ-string
-const _LZ_KEYS = new Set(['fichasEditadas','insumosCustomData','insumosCustomCosts','vendas','fluxoLanc']);
+const _LZ_KEYS = new Set(['fichasEditadas','insumosCustomData','insumosCustomCosts']); // 'vendas' e 'fluxoLanc' removidos — LZString round-trip nao confiavel
 
 // ════════════════════════════════════════════════════════════════════════════
 // MULTI-LOJA — configuração, chave ativa e helper
