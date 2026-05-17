@@ -4972,6 +4972,241 @@ const LOJAS_CONFIG = [
   { id: 'sion',         nome: 'Sion',          emoji: '🏬', cor: '#7B8DD4' },
 ];
 
+// ════════════════════════════════════════════════════════════════════════════
+// CONSTANTES DA PLANILHA DA CONSULTORA FINANCEIRA
+// (espelham "Orcamento e DRE 2026 - Grupo chocake")
+// ════════════════════════════════════════════════════════════════════════════
+
+// Mapeia nomes da planilha (caixa alta) para o id da loja no sistema
+const LOJAS_PLANILHA_MAP = {
+  'MATRIZ':          'funcionarios',
+  'FUNCIONÁRIOS':    'funcionarios',
+  'FUNCIONARIOS':    'funcionarios',
+  'SION':            'sion',
+  'VILA DA SERRA':   'viladaserra',
+  'VILADASERRA':     'viladaserra',
+};
+
+// Tipos de Faturamento (entradas) — da aba "Tipos de Faturamento" da planilha
+const TIPOS_FATURAMENTO = [
+  { id:'loja',         label:'Faturamento loja',                       canal:'Loja',           entradaCaixa:true  },
+  { id:'delivery',     label:'Faturamento delivery',                   canal:'Delivery',       entradaCaixa:true  },
+  { id:'encomenda',    label:'Faturamento encomenda',                  canal:'Encomenda',      entradaCaixa:true  },
+  { id:'revenda',      label:'Faturamento revenda',                    canal:'Revenda',        entradaCaixa:true  },
+  { id:'transferencia',label:'Faturamento transferencia entre lojas',  canal:'Transferência',  entradaCaixa:true  },
+  { id:'emprestimo',   label:'Empréstimo',                             canal:'Outros',         entradaCaixa:true  },
+  { id:'outras',       label:'Outras Entradas',                        canal:'Outros',         entradaCaixa:true  },
+];
+
+// Formas de Pagamento — da tabela "Formas de pagamento" (taxa + prazo)
+const FORMAS_PGTO_PLANILHA = [
+  { id:'alelo',         label:'Alelo',          taxa: 7.00, prazo: 22 },
+  { id:'pluxee',        label:'Pluxee',         taxa: 7.00, prazo: 28 },
+  { id:'vr',            label:'VR',             taxa: 7.00, prazo: 22 },
+  { id:'tkt',           label:'TKT',            taxa: 7.00, prazo: 22 },
+  { id:'credito',       label:'Crédito',        taxa: 2.50, prazo:  1 },
+  { id:'debito',        label:'Débito',         taxa: 1.40, prazo:  1 },
+  { id:'pix_tef',       label:'Pix TEF',        taxa: 0.50, prazo:  0 },
+  { id:'pix',           label:'Pix',            taxa: 0.00, prazo:  0 },
+  { id:'transferencia', label:'Transferência',  taxa: 0.00, prazo:  0 },
+  { id:'ifood',         label:'iFood',          taxa:27.00, prazo: 22 },
+  { id:'dinheiro',      label:'Dinheiro',       taxa: 0.00, prazo:  0 },
+];
+
+// Helper: calcula valor liquido e data de recebimento a partir do bruto
+function _calcLiquidoPlanilha(valorBruto, formaPgtoId, dataVenda) {
+  const fp = FORMAS_PGTO_PLANILHA.find(f => f.id === formaPgtoId);
+  if (!fp) return { liquido: valorBruto, encargos: 0, dataRecebimento: dataVenda };
+  const encargos = (valorBruto * fp.taxa) / 100;
+  const liquido  = valorBruto - encargos;
+  let dataRec = dataVenda;
+  if (fp.prazo > 0 && dataVenda) {
+    const d = new Date(dataVenda);
+    if (!isNaN(d)) {
+      // Aproxima dias uteis somando dias corridos (consultora usa dias uteis,
+      // mas para simplicidade usamos corridos — ajustar se necessario)
+      d.setDate(d.getDate() + fp.prazo);
+      dataRec = d.toISOString().slice(0, 10);
+    }
+  }
+  return { liquido, encargos, dataRecebimento: dataRec };
+}
+
+// Status do PG — da aba "Status do PG"
+const STATUS_PG_LIST = [
+  { id:'realizado', label:'Realizado',   cor:'#2CA35C' },
+  { id:'previsto',  label:'Previsto',    cor:'#7B8DD4' },
+  { id:'vencido',   label:'VC — vencido',cor:'#E54141' },
+];
+
+// Contas Bancarias — da aba "Conta"
+const CONTAS_DESTINO_PLANILHA = [
+  { id:'1', label:'Conta 1' },
+  { id:'2', label:'Conta 2' },
+  { id:'3', label:'Conta 3' },
+];
+
+// ────────────────────────────────────────────────────────────────────────────
+// 70 categorias de despesas/CMV (lista exata da planilha)
+// + agrupamento em secoes do DRE (CMV, Pessoas, Infra, Marketing, etc)
+// ────────────────────────────────────────────────────────────────────────────
+const DRE_CATEGORIAS = [
+  // CMV (Matéria-prima e diretas)
+  { nome:'Matéria-prima',                              grupo:'CMV' },
+  { nome:'Embalagens',                                 grupo:'CMV' },
+  { nome:'Produtos Adquiridos',                        grupo:'CMV' },
+  { nome:'Transferencia de produtos entre lojas',      grupo:'CMV' },
+
+  // Pessoas (salarios, encargos, beneficios)
+  { nome:'Salário',                                    grupo:'Pessoas' },
+  { nome:'Salário Fora da Folha',                      grupo:'Pessoas' },
+  { nome:'Pró-labore',                                 grupo:'Pessoas' },
+  { nome:'13 pago',                                    grupo:'Pessoas' },
+  { nome:'Décimo Terceiro',                            grupo:'Pessoas' },
+  { nome:'Férias',                                     grupo:'Pessoas' },
+  { nome:'FGTS',                                       grupo:'Pessoas' },
+  { nome:'Inss',                                       grupo:'Pessoas' },
+  { nome:'Rescisão',                                   grupo:'Pessoas' },
+  { nome:'Rescisão paga',                              grupo:'Pessoas' },
+  { nome:'Causas Trabalhistas',                        grupo:'Pessoas' },
+  { nome:'Mão de Obra extra',                          grupo:'Pessoas' },
+  { nome:'Gratificação funcionários',                  grupo:'Pessoas' },
+  { nome:'Refeição',                                   grupo:'Pessoas' },
+  { nome:'Vale alimentação',                           grupo:'Pessoas' },
+  { nome:'Vale Transporte',                            grupo:'Pessoas' },
+  { nome:'Exame médico',                               grupo:'Pessoas' },
+  { nome:'Uniforme',                                   grupo:'Pessoas' },
+
+  // Infraestrutura (ponto, agua, luz, etc)
+  { nome:'Aluguel',                                    grupo:'Infraestrutura' },
+  { nome:'Aluguel de equipamentos',                    grupo:'Infraestrutura' },
+  { nome:'Condominio',                                 grupo:'Infraestrutura' },
+  { nome:'Iptu',                                       grupo:'Infraestrutura' },
+  { nome:'Energia',                                    grupo:'Infraestrutura' },
+  { nome:'Água e Esgoto',                              grupo:'Infraestrutura' },
+  { nome:'Gás',                                        grupo:'Infraestrutura' },
+  { nome:'Telefone e Internet',                        grupo:'Infraestrutura' },
+  { nome:'Alarme/ monitoramento',                      grupo:'Infraestrutura' },
+  { nome:'Detetização',                                grupo:'Infraestrutura' },
+  { nome:'Desentupidora',                              grupo:'Infraestrutura' },
+  { nome:'Manutenção',                                 grupo:'Infraestrutura' },
+  { nome:'Reformas',                                   grupo:'Infraestrutura' },
+  { nome:'Material de limpeza',                        grupo:'Infraestrutura' },
+  { nome:'Material de escritório',                     grupo:'Infraestrutura' },
+  { nome:'Utensílio',                                  grupo:'Infraestrutura' },
+  { nome:'Taxa de lixo',                               grupo:'Infraestrutura' },
+  { nome:'Seguros',                                    grupo:'Infraestrutura' },
+
+  // Marketing / Comercial
+  { nome:'Marketing',                                  grupo:'Marketing' },
+  { nome:'Cupons de Desconto',                         grupo:'Marketing' },
+  { nome:'Cupons Delivery',                            grupo:'Marketing' },
+  { nome:'Descontos Clientes',                         grupo:'Marketing' },
+  { nome:'beneficios/Cortesia',                        grupo:'Marketing' },
+  { nome:'Musico',                                     grupo:'Marketing' },
+
+  // Logistica / Delivery
+  { nome:'Motoboy',                                    grupo:'Logística' },
+  { nome:'Serviço de Entrega (Mottu)',                 grupo:'Logística' },
+  { nome:'Taxas Delivery',                             grupo:'Logística' },
+  { nome:'Transporte/Frete',                           grupo:'Logística' },
+
+  // Servicos / Software / Profissionais
+  { nome:'Softwares',                                  grupo:'Serviços' },
+  { nome:'Advogado',                                   grupo:'Serviços' },
+  { nome:'Contabilidade',                              grupo:'Serviços' },
+  { nome:'Assessoria / Consultoria de gestão',         grupo:'Serviços' },
+  { nome:'Assessoria qualidade de alimentos',          grupo:'Serviços' },
+
+  // Impostos / Taxas
+  { nome:'Simples Nacional',                           grupo:'Impostos' },
+  { nome:'ICMS',                                       grupo:'Impostos' },
+  { nome:'Imposto Parcelado',                          grupo:'Impostos' },
+  { nome:'Taxas públicas',                             grupo:'Impostos' },
+  { nome:'Taxas Vendas Cartão',                        grupo:'Impostos' },
+  { nome:'Ecad',                                       grupo:'Impostos' },
+
+  // Financeiras
+  { nome:'Tarifas Bancárias',                          grupo:'Financeiras' },
+  { nome:'Juros e multas',                             grupo:'Financeiras' },
+  { nome:'Empréstimo',                                 grupo:'Financeiras' },
+  { nome:'Fornecedor em atraso',                       grupo:'Financeiras' },
+
+  // Investimentos
+  { nome:'Aquisição de Equipamentos',                  grupo:'Investimentos' },
+  { nome:'Investimento no negocio',                    grupo:'Investimentos' },
+
+  // Movimentacoes internas / Outras
+  { nome:'Retirada pessoal',                           grupo:'Sócios' },
+  { nome:'Transferência entre contas',                 grupo:'Movimentação' },
+  { nome:'Outras Saidas',                              grupo:'Outras' },
+];
+
+// Helper: lista as categorias de um grupo do DRE
+function _catsDoGrupo(grupo) {
+  return DRE_CATEGORIAS.filter(c => c.grupo === grupo).map(c => c.nome);
+}
+
+// Ordem dos grupos no DRE (igual aa estrutura da consultora)
+const DRE_GRUPOS_ORDEM = [
+  'CMV','Pessoas','Infraestrutura','Logística','Marketing',
+  'Serviços','Impostos','Financeiras','Investimentos','Sócios',
+  'Movimentação','Outras'
+];
+
+// Helper: normaliza nome de loja vindo da planilha
+function _normalizarLojaPlanilha(nomePlanilha) {
+  if (!nomePlanilha) return null;
+  const up = String(nomePlanilha).trim().toUpperCase();
+  return LOJAS_PLANILHA_MAP[up] || null;
+}
+
+// Helper: descobre o canal a partir do tipo de faturamento da planilha
+function _canalDoTipoFaturamento(tipoStr) {
+  if (!tipoStr) return null;
+  const t = String(tipoStr).toLowerCase();
+  if (t.includes('loja'))         return 'Loja';
+  if (t.includes('delivery'))     return 'Delivery';
+  if (t.includes('encomenda'))    return 'Encomenda';
+  if (t.includes('revenda'))      return 'Revenda';
+  if (t.includes('transfer'))     return 'Transferência';
+  if (t.includes('empréstimo') || t.includes('emprestimo')) return 'Empréstimo';
+  if (t.includes('outras'))       return 'Outras Entradas';
+  return null;
+}
+
+// Helper: parser de valor monetario "R$ 1.234,56" ou "1234,56" ou "1234.56"
+function _parseValorPlanilha(s) {
+  if (s == null) return 0;
+  if (typeof s === 'number') return s;
+  let v = String(s).replace(/R\$/g,'').replace(/\s/g,'').trim();
+  if (!v) return 0;
+  // Detecta formato BR: tem virgula e ponto -> ponto e milhar
+  const temVirgula = v.includes(',');
+  const temPonto   = v.includes('.');
+  if (temVirgula && temPonto) {
+    v = v.replace(/\./g,'').replace(',','.');
+  } else if (temVirgula) {
+    v = v.replace(',','.');
+  }
+  const n = parseFloat(v);
+  return isNaN(n) ? 0 : n;
+}
+
+// Helper: parser de data "31/01/2026" ou "2026-01-31" -> YYYY-MM-DD
+function _parseDataPlanilha(s) {
+  if (!s) return null;
+  if (typeof s !== 'string') s = String(s);
+  s = s.trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+  const m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
+  if (!m) return null;
+  let [_, dia, mes, ano] = m;
+  if (ano.length === 2) ano = '20' + ano;
+  return `${ano}-${mes.padStart(2,'0')}-${dia.padStart(2,'0')}`;
+}
+
+
 // Chaves isoladas por loja (todas as outras são compartilhadas entre lojas)
 const _PER_LOJA_KEYS = new Set([
   // Vendas / financeiro
