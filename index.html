@@ -1779,9 +1779,19 @@ if (!localStorage.getItem("custosVariaveis")) { localStorage.setItem("custosVari
     <div class="page-header">
       <div>
         <div class="page-title">DRE — Demonstrativo de Resultado</div>
-        <div class="page-subtitle" id="dre-subtitle">Resultado consolidado</div>
+        <div class="page-subtitle" id="dre-subtitle">Estilo da consultora financeira</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <select id="dre-modo" onchange="renderDRE()"
+                style="border:1px solid var(--borda);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--marrom);background:var(--bg);cursor:pointer">
+          <option value="competencia">Competência (data da venda)</option>
+          <option value="fluxo">Fluxo (data do recebimento)</option>
+        </select>
+        <select id="dre-periodo" onchange="renderDRE()"
+                style="border:1px solid var(--borda);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--marrom);background:var(--bg);cursor:pointer">
+          <option value="mes">Mês individual</option>
+          <option value="ano" selected>Ano inteiro (Jan-Dez)</option>
+        </select>
         <input type="month" id="dre-mes-sel"
                style="border:1px solid var(--borda);border-radius:8px;padding:6px 10px;font-size:13px;color:var(--marrom);background:var(--bg);cursor:pointer"
                onchange="renderDRE()">
@@ -7202,6 +7212,229 @@ function _fmtR(v) {
   return 'R$ ' + Math.abs(Math.round(v)).toLocaleString('pt-BR');
 }
 
+// ════════════════════════════════════════════════════════════════════════════
+// DRE ESTILO PLANILHA DA CONSULTORA
+// Estrutura: receitas por canal + despesas por grupo de categoria
+// ════════════════════════════════════════════════════════════════════════════
+
+// Mapeia categoria do lancamento (FLUXO_LANC) ou custo fixo (CUSTOS_FIXOS) ao grupo do DRE
+function _grupoDaCategoria(cat) {
+  if (!cat) return 'Outras';
+  const c = String(cat).trim();
+  const found = DRE_CATEGORIAS.find(d => d.nome.toLowerCase() === c.toLowerCase());
+  if (found) return found.grupo;
+  // Fuzzy match para descricoes mais livres
+  const cl = c.toLowerCase();
+  for (const dc of DRE_CATEGORIAS) {
+    if (cl.includes(dc.nome.toLowerCase()) || dc.nome.toLowerCase().includes(cl)) return dc.grupo;
+  }
+  return 'Outras';
+}
+
+// Calcula DRE estilo planilha para uma loja (ou null = consolidado) e um periodo
+// modo: 'competencia' (filtra por data da venda) ou 'fluxo' (filtra por dataRecebimento)
+function _calcDREPlanilha(lojaNomeFiltro, periodoStr, modo) {
+  // periodoStr pode ser 'YYYY-MM' ou 'YYYY'
+  const matchPeriodo = (data) => {
+    if (!data) return false;
+    if (periodoStr.length === 4) return data.startsWith(periodoStr); // ano inteiro
+    return data.startsWith(periodoStr); // mes especifico
+  };
+  const dataDoLanc = (l) => {
+    if (modo === 'fluxo') return l.dataRecebimento || l.data;
+    return l.data; // competencia
+  };
+
+  // Receitas por canal
+  const receitasPorCanal = { 'Loja':0, 'Delivery':0, 'Encomenda':0, 'Revenda':0, 'Transferência':0, 'Outras Entradas':0 };
+
+  // Itera FLUXO_LANC de cada loja (per-loja storage)
+  const lojas = lojaNomeFiltro
+    ? LOJAS_CONFIG.filter(l => l.nome === lojaNomeFiltro)
+    : LOJAS_CONFIG;
+
+  lojas.forEach(loja => {
+    const fluxoKey = `_L_${loja.id}_fluxoLancamentos`;
+    let fluxo = [];
+    try { fluxo = JSON.parse(localStorage.getItem(fluxoKey) || '[]'); } catch(e) {}
+    fluxo.forEach(l => {
+      if (!matchPeriodo(dataDoLanc(l))) return;
+      if (l.tipo === 'entrada') {
+        const canal = l.canal || 'Outras Entradas';
+        receitasPorCanal[canal] = (receitasPorCanal[canal] || 0) + (l.valorBruto || l.valor || 0);
+      }
+    });
+  });
+
+  // Receita total
+  const receitaTotal = Object.values(receitasPorCanal).reduce((s,v) => s + v, 0);
+
+  // Despesas por grupo (das CUSTOS_FIXOS + CUSTOS_VARIAVEIS + FLUXO_LANC saidas)
+  const despesasPorGrupo = {};
+  DRE_GRUPOS_ORDEM.forEach(g => { despesasPorGrupo[g] = 0; });
+
+  // Saidas do FLUXO_LANC
+  lojas.forEach(loja => {
+    const fluxoKey = `_L_${loja.id}_fluxoLancamentos`;
+    let fluxo = [];
+    try { fluxo = JSON.parse(localStorage.getItem(fluxoKey) || '[]'); } catch(e) {}
+    fluxo.forEach(l => {
+      if (!matchPeriodo(dataDoLanc(l))) return;
+      if (l.tipo === 'saida') {
+        const grupo = _grupoDaCategoria(l.categoria || l.desc);
+        despesasPorGrupo[grupo] = (despesasPorGrupo[grupo] || 0) + Math.abs(l.valor || 0);
+      }
+    });
+  });
+
+  // Custos fixos das lojas (rateio mensal — se periodo for ano, multiplica por meses)
+  // Para simplicidade: assumimos custos fixos sao mensais. Quantos meses no periodo?
+  const mesesNoPeriodo = (periodoStr.length === 4) ? 12 : 1;
+  lojas.forEach(loja => {
+    const cf = (typeof CUSTOS_FIXOS !== 'undefined') ? (CUSTOS_FIXOS[loja.nome] || {}) : {};
+    ['pessoas','infraestrutura','logistica'].forEach(sec => {
+      const arr = sec === 'pessoas'
+        ? [...(cf.pessoas?.salarios||[]), ...(cf.pessoas?.beneficiosImpostos||[])]
+        : (cf[sec] || []);
+      arr.forEach(c => {
+        const grupo = _grupoDaCategoria(c.desc) || (sec === 'pessoas' ? 'Pessoas' : (sec === 'logistica' ? 'Logística' : 'Infraestrutura'));
+        despesasPorGrupo[grupo] = (despesasPorGrupo[grupo] || 0) + (c.valor || 0) * mesesNoPeriodo;
+      });
+    });
+  });
+
+  // Total despesas e resultado
+  const despesaTotal = Object.values(despesasPorGrupo).reduce((s,v) => s + v, 0);
+  const resultado = receitaTotal - despesaTotal;
+  const margemPct = receitaTotal > 0 ? (resultado / receitaTotal * 100) : 0;
+
+  return {
+    receitasPorCanal,
+    receitaTotal,
+    despesasPorGrupo,
+    despesaTotal,
+    resultado,
+    margemPct,
+  };
+}
+
+// Consolida varios DREs (soma por canal e grupo)
+function _consolidarDREs(dres) {
+  const out = {
+    receitasPorCanal: { 'Loja':0,'Delivery':0,'Encomenda':0,'Revenda':0,'Transferência':0,'Outras Entradas':0 },
+    receitaTotal: 0,
+    despesasPorGrupo: {},
+    despesaTotal: 0,
+    resultado: 0,
+    margemPct: 0,
+  };
+  DRE_GRUPOS_ORDEM.forEach(g => { out.despesasPorGrupo[g] = 0; });
+
+  dres.forEach(d => {
+    Object.keys(d.receitasPorCanal).forEach(k => {
+      out.receitasPorCanal[k] = (out.receitasPorCanal[k] || 0) + (d.receitasPorCanal[k] || 0);
+    });
+    Object.keys(d.despesasPorGrupo).forEach(k => {
+      out.despesasPorGrupo[k] = (out.despesasPorGrupo[k] || 0) + (d.despesasPorGrupo[k] || 0);
+    });
+    out.receitaTotal += d.receitaTotal;
+    out.despesaTotal += d.despesaTotal;
+    out.resultado += d.resultado;
+  });
+  out.margemPct = out.receitaTotal > 0 ? (out.resultado / out.receitaTotal * 100) : 0;
+  return out;
+}
+
+// Renderiza o DRE no estilo da planilha (linhas = linhas do DRE, colunas = meses ou unica)
+function _renderDREPlanilha(colunas, periodo) {
+  const isAno = periodo === 'ano';
+  const _fmt = (v) => v > 0 ? _fmtR(v) : (v < 0 ? '-' + _fmtR(Math.abs(v)) : '—');
+  const _pct = (v, base) => base > 0 ? `<span style="font-size:10px;color:var(--cinza)">${(v/base*100).toFixed(1)}%</span>` : '';
+
+  // Verifica se ha algum dado
+  const temDado = colunas.some(c => c.dre.receitaTotal > 0 || c.dre.despesaTotal > 0);
+  if (!temDado) {
+    return `<div style="text-align:center;padding:40px;color:var(--cinza)">
+      <div style="font-size:32px;margin-bottom:12px">📊</div>
+      <div style="font-weight:600">Sem dados neste período</div>
+      <div style="font-size:13px;margin-top:8px">Importe seus lançamentos no <strong>Fluxo de Caixa → Importar da Planilha</strong>.</div>
+    </div>`;
+  }
+
+  const fontSize = isAno ? '11px' : '13px';
+  const padCell = isAno ? '5px 8px' : '8px 12px';
+
+  // Helper para celula de valor
+  const cellVal = (v, isTotalCol, isLast, isFinal) => {
+    const cor = v > 0 ? 'var(--texto)' : v < 0 ? '#E54141' : 'var(--cinza)';
+    const bg = isTotalCol ? 'background:#F5F1FA;' : '';
+    const fw = isFinal ? '700' : '500';
+    return `<td style="text-align:right;padding:${padCell};font-size:${fontSize};color:${cor};font-weight:${fw};${bg}">${_fmt(v)}</td>`;
+  };
+
+  // Header
+  const thead = `<thead><tr>
+    <th style="text-align:left;padding:${padCell};font-size:${fontSize};font-weight:700;color:var(--marrom);background:#FBF0EE;position:sticky;left:0;z-index:2;min-width:180px">Conta</th>
+    ${colunas.map(c => `<th style="text-align:right;padding:${padCell};font-size:${fontSize};font-weight:700;color:var(--marrom);background:${c.isTotal?'#F5F1FA':'#FBF0EE'}">${c.label}</th>`).join('')}
+  </tr></thead>`;
+
+  // Linha de secao (cabecalho de bloco)
+  const secao = (label, cor='#FBF0EE') => `<tr style="background:${cor}">
+    <td colspan="${colunas.length+1}" style="padding:6px 10px;font-size:${fontSize};font-weight:700;color:var(--marrom);text-transform:uppercase;letter-spacing:.05em">${label}</td>
+  </tr>`;
+
+  // Linha de detalhe (categoria/canal)
+  const linhaDet = (label, valores, isFinal=false) => `<tr ${isFinal?'style="border-top:2px solid var(--marrom);background:#FDF6F3"':''}>
+    <td style="padding:${padCell};font-size:${fontSize};color:var(--texto);font-weight:${isFinal?'700':'500'};position:sticky;left:0;background:white;z-index:1">${label}</td>
+    ${valores.map((v, i) => cellVal(v, colunas[i].isTotal, i === valores.length-1, isFinal)).join('')}
+  </tr>`;
+
+  // RECEITAS por canal
+  const canais = ['Loja','Delivery','Encomenda','Revenda','Transferência','Outras Entradas'];
+  let body = secao('💰 Receitas');
+  canais.forEach(canal => {
+    const valores = colunas.map(c => c.dre.receitasPorCanal[canal] || 0);
+    const totalCanal = valores.reduce((s,v) => s+v, 0);
+    if (totalCanal > 0) {
+      body += linhaDet(`Faturamento ${canal.toLowerCase()}`, valores);
+    }
+  });
+  body += linhaDet('Receita Total', colunas.map(c => c.dre.receitaTotal), true);
+
+  // DESPESAS por grupo
+  const gruposComValor = DRE_GRUPOS_ORDEM.filter(g =>
+    colunas.some(c => (c.dre.despesasPorGrupo[g] || 0) > 0)
+  );
+  if (gruposComValor.length > 0) {
+    body += secao('💸 Despesas', '#F8E8E5');
+    gruposComValor.forEach(grupo => {
+      const valores = colunas.map(c => -(c.dre.despesasPorGrupo[grupo] || 0));
+      body += linhaDet(grupo, valores);
+    });
+    body += linhaDet('Despesa Total', colunas.map(c => -c.dre.despesaTotal), true);
+  }
+
+  // RESULTADO
+  body += secao('📊 Resultado', '#E8F4EC');
+  body += linhaDet('Resultado (Receita − Despesa)', colunas.map(c => c.dre.resultado), true);
+  // Margem em %
+  body += `<tr style="background:#E8F4EC">
+    <td style="padding:${padCell};font-size:${fontSize};font-weight:700;color:var(--marrom);position:sticky;left:0;background:#E8F4EC;z-index:1">Margem %</td>
+    ${colunas.map(c => {
+      const m = c.dre.margemPct;
+      const cor = m >= 15 ? '#2CA35C' : m >= 0 ? '#D4A840' : '#E54141';
+      return `<td style="text-align:right;padding:${padCell};font-size:${fontSize};font-weight:700;color:${cor};background:${c.isTotal?'#D8EDDE':'#E8F4EC'}">${m.toFixed(1)}%</td>`;
+    }).join('')}
+  </tr>`;
+
+  return `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse">${thead}<tbody>${body}</tbody></table></div>
+    <div style="margin-top:14px;padding:12px;background:#FFF7E6;border:1px solid #F5A623;border-radius:8px;font-size:12px;color:#8B5A0F;line-height:1.5">
+      <strong>ℹ️ Modo de cálculo:</strong> Lançamentos importados da planilha + custos fixos cadastrados.
+      No modo <strong>Competência</strong> usa a data da venda; no <strong>Fluxo</strong> usa a data do recebimento (depende do prazo da forma de pagamento).
+    </div>`;
+}
+
+
 // Painel de indicadores de saúde financeira
 function _renderIndicadores(dre) {
   const rb = dre.recBruta;
@@ -7316,27 +7549,36 @@ function renderDRE() {
   const el = document.getElementById('dre-content');
   if (!el) return;
 
-  // Inicializa seletor de mês com o mês atual se vazio
+  // Modo (competencia/fluxo) e periodo (mes/ano)
+  const modo = document.getElementById('dre-modo')?.value || 'competencia';
+  const periodo = document.getElementById('dre-periodo')?.value || 'ano';
+
+  // Inicializa seletor de mes
   const mesInput = document.getElementById('dre-mes-sel');
   if (mesInput && !mesInput.value) mesInput.value = currentMonth || new Date().toISOString().slice(0,7);
   const mesAno = (mesInput?.value) || currentMonth || new Date().toISOString().slice(0,7);
   const [ano, mes] = mesAno.split('-');
-  const mesNome = new Date(+ano, +mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
 
+  // Mostra/esconde o seletor de mes conforme o periodo
+  if (mesInput) mesInput.style.display = (periodo === 'mes') ? '' : 'none';
+
+  // Subtitle
+  const mesNome = new Date(+ano, +mes - 1).toLocaleString('pt-BR', { month: 'long', year: 'numeric' });
+  const periodoTxt = periodo === 'ano' ? `Ano ${ano}` : mesNome;
+  const modoTxt = modo === 'competencia' ? 'Competência' : 'Fluxo de Caixa';
   const subtitleEl = document.getElementById('dre-subtitle');
   if (subtitleEl) {
-    const titulo = _DRE_VIEW === 'grupo'
-      ? 'Grupo Chocake — ' + mesNome
-      : (LOJAS_CONFIG.find(l => l.id === _DRE_VIEW)?.nome || '') + ' — ' + mesNome;
-    subtitleEl.textContent = titulo.charAt(0).toUpperCase() + titulo.slice(1);
+    const tituloLoja = _DRE_VIEW === 'grupo'
+      ? 'Grupo Chocake'
+      : (LOJAS_CONFIG.find(l => l.id === _DRE_VIEW)?.nome || '');
+    subtitleEl.textContent = `${tituloLoja} · ${periodoTxt} · ${modoTxt}`;
   }
 
-  // Tabs de navegação — filtradas por contexto
+  // Tabs (Grupo + lojas), filtrados por contexto
   const tabsEl = document.getElementById('dre-tabs');
   if (tabsEl) {
     const lojaCtx = _ctxLojaAtivaNome ? _ctxLojaAtivaNome() : null;
     const isGrupoCtx = !lojaCtx;
-    // Auto-seleciona a view correta ao entrar no módulo
     if (!isGrupoCtx && _DRE_VIEW === 'grupo') {
       _DRE_VIEW = (_contextoAtual && _contextoAtual.id) || 'grupo';
     }
@@ -7344,7 +7586,6 @@ function renderDRE() {
       { id: 'grupo', label: 'Grupo Chocake', emoji: '📊' },
       ...LOJAS_CONFIG.map(l => ({ id: l.id, label: l.nome, emoji: l.emoji }))
     ];
-    // Em contexto de loja: exibe só a aba dessa loja
     if (!isGrupoCtx) {
       const lojaId = _contextoAtual && _contextoAtual.id;
       tabs = tabs.filter(t => t.id === lojaId);
@@ -7358,25 +7599,38 @@ function renderDRE() {
     ).join('');
   }
 
-  if (_DRE_VIEW === 'grupo') {
-    // Calcula DRE para cada loja
-    const colunas = LOJAS_CONFIG.map(l => ({
-      label: l.nome, emoji: l.emoji, dre: _calcDRELoja(l.nome, mesAno)
-    }));
-    // Consolidado: soma de todas as lojas
-    const keys = ['recBruta','deducoes','recLiquida','cmv','lucroBruto','maoObra','lucroContrib','despOp','ebitda','despFin','lucroLiq','nVendas'];
-    const consol = {};
-    keys.forEach(k => { consol[k] = colunas.reduce((s, c) => s + c.dre[k], 0); });
-    consol.margem = consol.recBruta > 0 ? consol.lucroLiq / consol.recBruta * 100 : 0;
-    const colunasGrupo = [...colunas, { label: 'Consolidado', emoji: '📊', dre: consol }];
-
-    el.innerHTML = _renderIndicadores(consol) + _renderDRETabela(colunasGrupo);
-  } else {
-    const loja = LOJAS_CONFIG.find(l => l.id === _DRE_VIEW);
-    if (!loja) return;
-    const dre = _calcDRELoja(loja.nome, mesAno);
-    el.innerHTML = _renderIndicadores(dre) + _renderDRETabela([{ label: loja.nome, emoji: loja.emoji, dre }]);
+  // Decide qual loja calcular
+  let lojaNomeFiltro = null;
+  if (_DRE_VIEW !== 'grupo') {
+    lojaNomeFiltro = LOJAS_CONFIG.find(l => l.id === _DRE_VIEW)?.nome || null;
   }
+
+  // Colunas (meses ou unica)
+  let colunas;
+  if (periodo === 'ano') {
+    colunas = [];
+    for (let m = 1; m <= 12; m++) {
+      const mesStr = String(m).padStart(2,'0');
+      const ymStr = `${ano}-${mesStr}`;
+      const nome = new Date(+ano, m-1).toLocaleString('pt-BR', { month: 'short' }).replace('.','');
+      colunas.push({
+        label: nome.charAt(0).toUpperCase() + nome.slice(1),
+        periodoStr: ymStr,
+        dre: _calcDREPlanilha(lojaNomeFiltro, ymStr, modo),
+      });
+    }
+    // Adiciona coluna Total Anual
+    const total = _consolidarDREs(colunas.map(c => c.dre));
+    colunas.push({ label: 'Total', periodoStr: ano, dre: total, isTotal: true });
+  } else {
+    colunas = [{
+      label: mesNome.charAt(0).toUpperCase() + mesNome.slice(1),
+      periodoStr: mesAno,
+      dre: _calcDREPlanilha(lojaNomeFiltro, mesAno, modo),
+    }];
+  }
+
+  el.innerHTML = _renderDREPlanilha(colunas, periodo);
 }
 
 function _dreMudarView(id) {
