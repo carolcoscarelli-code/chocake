@@ -12398,6 +12398,8 @@ function _gerarPrevisaoDinamica() {
 
   // 4. Para cada produto vendido, calcula: media diaria, semanal (4.3 sem/mes)
   const produtos = [];
+  function _parseRendimento(r){if(!r)return 1;if(typeof r==='number')return r;const m=String(r).replace(',','.').match(/[\d.]+/);return m?parseFloat(m[0]):1;}
+
   vendasProd.forEach(vp => {
     const qtdMes = vp.qtdTotal || 0;
     if (qtdMes <= 0) return;
@@ -12414,7 +12416,7 @@ function _gerarPrevisaoDinamica() {
       meta_sem: metaSem,
       rendimento_un: ficha?.rendimento || 1,
       receitas_sem: ficha?.rendimento > 0 ? Math.ceil(metaSem / ficha.rendimento) : 0,
-      unidades_prod: ficha?.rendimento > 0 ? Math.ceil(metaSem / ficha.rendimento) * ficha.rendimento : metaSem,
+      unidades_prod: (_parseRendimento(ficha?.rendimento) > 0 ? Math.ceil(metaSem / _parseRendimento(ficha.rendimento)) * _parseRendimento(ficha.rendimento) : metaSem),
       valor_semana: mediaSem * (vp.precoMedio || 0),
       cmv_unit: vp.cmvUnit || 0,
       sem_ficha: !ficha,
