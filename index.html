@@ -12364,13 +12364,134 @@ function exportarListaCompras() {
 // ========== PREVISÃO DE PRODUÇÃO ==========
 const PREVISAO_DATA = {"loja": "Vila da Serra", "periodo_dias": 21, "semanas": 3.0, "produtos": [{"item": "Cookie de Nutella", "ficha": "COOKIES DE NUTELLA", "qtd_periodo": 159, "media_sem": 53.0, "meta_sem": 58.3, "rendimento_un": 19, "receitas_sem_raw": 3.07, "receitas_sem": 4, "unidades_prod": 76, "valor_semana": 836.67}, {"item": "Brownie Recheado de Brigadeiro", "ficha": "BROWNIE", "qtd_periodo": 147, "media_sem": 49.0, "meta_sem": 53.9, "rendimento_un": 24, "receitas_sem_raw": 2.25, "receitas_sem": 3, "unidades_prod": 72, "valor_semana": 500.5}, {"item": "Brownie Recheado de Ninho", "ficha": "BROWNIE", "qtd_periodo": 138, "media_sem": 46.0, "meta_sem": 50.6, "rendimento_un": 24, "receitas_sem_raw": 2.11, "receitas_sem": 3, "unidades_prod": 72, "valor_semana": 421.0}, {"item": "Bolo Geladinho Ninho e Brigadeiro", "ficha": "CREME DE NINHO PARA BOLO GELADO", "qtd_periodo": 87, "media_sem": 29.0, "meta_sem": 31.9, "rendimento_un": 1, "receitas_sem_raw": 31.9, "receitas_sem": 32, "unidades_prod": 32, "valor_semana": 523.5}, {"item": "Fatia de torta Cookie ninho e nutella", "ficha": "TORTA COOKIE NINHO E NUTELLA - 25CM - FATIAS", "qtd_periodo": 82, "media_sem": 27.3, "meta_sem": 30.1, "rendimento_un": 12, "receitas_sem_raw": 2.51, "receitas_sem": 3, "unidades_prod": 36, "valor_semana": 840.5}, {"item": "Palha Italiana Ninho e Nutella", "ficha": "PALHA ITALIANA NINHO E NUTELLA", "qtd_periodo": 82, "media_sem": 27.3, "meta_sem": 30.1, "rendimento_un": 27, "receitas_sem_raw": 1.11, "receitas_sem": 2, "unidades_prod": 54, "valor_semana": 341.67}, {"item": "Cookie de Caramelo Salgado", "ficha": "COOKIES DE COOKIE CHOCOLATE", "qtd_periodo": 77, "media_sem": 25.7, "meta_sem": 28.2, "rendimento_un": 19, "receitas_sem_raw": 1.49, "receitas_sem": 2, "unidades_prod": 38, "valor_semana": 399.33}, {"item": "Brownie Recheado de Pistache", "ficha": "BROWNIE", "qtd_periodo": 77, "media_sem": 25.7, "meta_sem": 28.2, "rendimento_un": 24, "receitas_sem_raw": 1.18, "receitas_sem": 2, "unidades_prod": 48, "valor_semana": 307.17}, {"item": "Palha Italiana Chocolate & Caramelo", "ficha": "PALHA ITALIANA CHOCOLATE E CARAMELO", "qtd_periodo": 70, "media_sem": 23.3, "meta_sem": 25.7, "rendimento_un": 54, "receitas_sem_raw": 0.48, "receitas_sem": 1, "unidades_prod": 54, "valor_semana": 308.0}, {"item": "Brownie Tradicional", "ficha": "BROWNIE", "qtd_periodo": 70, "media_sem": 23.3, "meta_sem": 25.7, "rendimento_un": 24, "receitas_sem_raw": 1.07, "receitas_sem": 2, "unidades_prod": 48, "valor_semana": 240.83}, {"item": "Brownie Recheado de Doce de Leite", "ficha": "BROWNIE", "qtd_periodo": 68, "media_sem": 22.7, "meta_sem": 24.9, "rendimento_un": 24, "receitas_sem_raw": 1.04, "receitas_sem": 2, "unidades_prod": 48, "valor_semana": 200.0}, {"item": "Bolo Geladinho Ninho e Nutella", "ficha": "CREME DE NINHO PARA BOLO GELADO", "qtd_periodo": 66, "media_sem": 22.0, "meta_sem": 24.2, "rendimento_un": 1, "receitas_sem_raw": 24.2, "receitas_sem": 25, "unidades_prod": 25, "valor_semana": 432.0}, {"item": "Cookie de Pistache", "ficha": "COOKIE DE  PISTACHE", "qtd_periodo": 64, "media_sem": 21.3, "meta_sem": 23.5, "rendimento_un": 19, "receitas_sem_raw": 1.24, "receitas_sem": 2, "unidades_prod": 38, "valor_semana": 327.67}, {"item": "Cookie Red Velvet", "ficha": "COOKIES DE COOKIE RED VELVET", "qtd_periodo": 57, "media_sem": 19.0, "meta_sem": 20.9, "rendimento_un": 19, "receitas_sem_raw": 1.1, "receitas_sem": 2, "unidades_prod": 38, "valor_semana": 304.17}, {"item": "Bolo Geladinho Ninho e Frutas Vermelhas", "ficha": "CREME DE NINHO PARA BOLO GELADO", "qtd_periodo": 53, "media_sem": 17.7, "meta_sem": 19.4, "rendimento_un": 1, "receitas_sem_raw": 19.43, "receitas_sem": 20, "unidades_prod": 20, "valor_semana": 327.5}, {"item": "Palha Italiana Pistache", "ficha": "PALHA ITALIANA PISTACHE", "qtd_periodo": 53, "media_sem": 17.7, "meta_sem": 19.4, "rendimento_un": 27, "receitas_sem_raw": 0.72, "receitas_sem": 1, "unidades_prod": 27, "valor_semana": 211.5}, {"item": "Brownie com Sorvete na Taça", "ficha": "BROWNIE", "qtd_periodo": 49, "media_sem": 16.3, "meta_sem": 18.0, "rendimento_un": 24, "receitas_sem_raw": 0.75, "receitas_sem": 1, "unidades_prod": 24, "valor_semana": 261.33}, {"item": "Brownie no Potinho Ninho & Nutella", "ficha": "BROWNIE", "qtd_periodo": 43, "media_sem": 14.3, "meta_sem": 15.8, "rendimento_un": 24, "receitas_sem_raw": 0.66, "receitas_sem": 1, "unidades_prod": 24, "valor_semana": 252.17}, {"item": "Bolo Geladinho Red Velvet", "ficha": "BOLO RED VELVET - POTES", "qtd_periodo": 33, "media_sem": 11.0, "meta_sem": 12.1, "rendimento_un": 1, "receitas_sem_raw": 12.1, "receitas_sem": 13, "unidades_prod": 13, "valor_semana": 229.83}, {"item": "Fatia Três Mousses", "ficha": "TORTA  3 MOUSSES", "qtd_periodo": 26, "media_sem": 8.7, "meta_sem": 9.5, "rendimento_un": 12, "receitas_sem_raw": 0.79, "receitas_sem": 1, "unidades_prod": 12, "valor_semana": 262.33}, {"item": "Brownie no Potinho Chocolate & Caramelo", "ficha": "BROWNIE", "qtd_periodo": 26, "media_sem": 8.7, "meta_sem": 9.5, "rendimento_un": 24, "receitas_sem_raw": 0.4, "receitas_sem": 1, "unidades_prod": 24, "valor_semana": 167.17}, {"item": "Amor em Pedaços", "ficha": "AMOR EM PEDAÇOS", "qtd_periodo": 24, "media_sem": 8.0, "meta_sem": 8.8, "rendimento_un": 30, "receitas_sem_raw": 0.29, "receitas_sem": 1, "unidades_prod": 30, "valor_semana": 104.0}, {"item": "Bolo Geladinho Limão", "ficha": "BOLO DE LIMÃO - POTES", "qtd_periodo": 20, "media_sem": 6.7, "meta_sem": 7.3, "rendimento_un": 1, "receitas_sem_raw": 7.33, "receitas_sem": 8, "unidades_prod": 8, "valor_semana": 123.33}, {"item": "Cookies Congelados Nutella", "ficha": "COOKIES DE NUTELLA", "qtd_periodo": 18, "media_sem": 6.0, "meta_sem": 6.6, "rendimento_un": 19, "receitas_sem_raw": 0.35, "receitas_sem": 1, "unidades_prod": 19, "valor_semana": 215.67}, {"item": "Bolo Geladinho Pistache e Chocolate", "ficha": "CREME DE PISTACHE PARA BOLO GELADO", "qtd_periodo": 18, "media_sem": 6.0, "meta_sem": 6.6, "rendimento_un": 1, "receitas_sem_raw": 6.6, "receitas_sem": 7, "unidades_prod": 7, "valor_semana": 117.83}, {"item": "Cookies Congelados Caramelo", "ficha": "COOKIES DE COOKIE CHOCOLATE", "qtd_periodo": 5, "media_sem": 1.7, "meta_sem": 1.8, "rendimento_un": 19, "receitas_sem_raw": 0.1, "receitas_sem": 1, "unidades_prod": 19, "valor_semana": 63.0}, {"item": "Cookies congelados tradicional", "ficha": "COOKIE TRADICIONAL", "qtd_periodo": 5, "media_sem": 1.7, "meta_sem": 1.8, "rendimento_un": 19, "receitas_sem_raw": 0.1, "receitas_sem": 1, "unidades_prod": 19, "valor_semana": 58.33}, {"item": "Sobremesa Ninho & Brigadeiro", "ficha": "SOBREMESA NINHO E BRIGADEIRO - 1 KG", "qtd_periodo": 4, "media_sem": 1.3, "meta_sem": 1.5, "rendimento_un": 1, "receitas_sem_raw": 1.47, "receitas_sem": 2, "unidades_prod": 2, "valor_semana": 123.93}, {"item": "Fatia Cheesecake", "ficha": "TORTA  CHEESECAKE 25 CM", "qtd_periodo": 4, "media_sem": 1.3, "meta_sem": 1.5, "rendimento_un": 12, "receitas_sem_raw": 0.12, "receitas_sem": 1, "unidades_prod": 12, "valor_semana": 43.5}, {"item": "Torta cookie 700g ninho e nutella", "ficha": "TORTA COOKIE NINHO E NUTELLA - 25CM - FATIAS", "qtd_periodo": 3, "media_sem": 1.0, "meta_sem": 1.1, "rendimento_un": 12, "receitas_sem_raw": 0.09, "receitas_sem": 1, "unidades_prod": 12, "valor_semana": 80.0}, {"item": "Cookies Congelados Chocolate", "ficha": "COOKIES DE COOKIE CHOCOLATE", "qtd_periodo": 2, "media_sem": 0.7, "meta_sem": 0.7, "rendimento_un": 19, "receitas_sem_raw": 0.04, "receitas_sem": 1, "unidades_prod": 19, "valor_semana": 21.33}], "lista_compras": [{"nome": "LEITE CONDENSADO", "cat": "Laticínios", "unid": "KG", "qtd_emb": 0.395, "custo_unit": 15.164557, "qtd_sem": 178.8136, "custo_sem": 2711.63, "qtd_emb_sem": 452.693, "emb_arred": 453, "custo_total": 2713.47}, {"nome": "CREME DE LEITE", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 15.99, "qtd_sem": 90.9635, "custo_sem": 1454.51, "qtd_emb_sem": 90.963, "emb_arred": 91, "custo_total": 1455.09}, {"nome": "CHOCOLATE EM PÓ 50%", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 63.99, "qtd_sem": 6.8945, "custo_sem": 441.18, "qtd_emb_sem": 6.894, "emb_arred": 7, "custo_total": 447.93}, {"nome": "CREME DE LEITE 25%", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 24.9, "qtd_sem": 16.9077, "custo_sem": 421.0, "qtd_emb_sem": 16.908, "emb_arred": 17, "custo_total": 423.3}, {"nome": "NUTELLA", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 3.0, "custo_unit": 66.0, "qtd_sem": 3.42, "custo_sem": 225.72, "qtd_emb_sem": 1.14, "emb_arred": 2, "custo_total": 396.0}, {"nome": "SICAO BLEND", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 86.5, "qtd_sem": 2.6, "custo_sem": 224.9, "qtd_emb_sem": 1.3, "emb_arred": 2, "custo_total": 346.0}, {"nome": "MARGARINA", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 17.5, "qtd_sem": 11.39, "custo_sem": 199.33, "qtd_emb_sem": 11.39, "emb_arred": 12, "custo_total": 210.0}, {"nome": "FARINHA DE TRIGO", "cat": "Farinhas e Amidos", "unid": "KG", "qtd_emb": 5.0, "custo_unit": 5.122, "qtd_sem": 37.47, "custo_sem": 191.92, "qtd_emb_sem": 7.494, "emb_arred": 8, "custo_total": 204.88}, {"nome": "GLUCOSE", "cat": "Outros Ingredientes", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 20.0, "qtd_sem": 8.6205, "custo_sem": 172.41, "qtd_emb_sem": 8.62, "emb_arred": 9, "custo_total": 180.0}, {"nome": "PASTA PISTACHE", "cat": "Especiais", "unid": "KG", "qtd_emb": 3.5, "custo_unit": 216.802857, "qtd_sem": 0.76, "custo_sem": 164.77, "qtd_emb_sem": 0.217, "emb_arred": 1, "custo_total": 758.81}, {"nome": "EMBALAGEM TORTA COOKIE", "cat": "Embalagens", "unid": "Unid", "qtd_emb": 50.0, "custo_unit": 3.3, "qtd_sem": 48.0, "custo_sem": 158.4, "qtd_emb_sem": 0.96, "emb_arred": 1, "custo_total": 165.0}, {"nome": "TODDY", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 1.8, "custo_unit": 23.327778, "qtd_sem": 6.75, "custo_sem": 157.46, "qtd_emb_sem": 3.75, "emb_arred": 4, "custo_total": 167.96}, {"nome": "OVOS", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.5, "custo_unit": 10.533333, "qtd_sem": 12.1, "custo_sem": 127.45, "qtd_emb_sem": 8.067, "emb_arred": 9, "custo_total": 142.2}, {"nome": "INOVARE INTENSO", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 52.5, "qtd_sem": 2.0, "custo_sem": 105.0, "qtd_emb_sem": 1.0, "emb_arred": 1, "custo_total": 105.0}, {"nome": "PISTACHE", "cat": "Especiais", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 185.0, "qtd_sem": 0.46, "custo_sem": 85.1, "qtd_emb_sem": 0.46, "emb_arred": 1, "custo_total": 185.0}, {"nome": "AÇÚCAR CRISTAL", "cat": "Açúcares", "unid": "KG", "qtd_emb": 5.0, "custo_unit": 3.398, "qtd_sem": 21.8867, "custo_sem": 74.37, "qtd_emb_sem": 4.377, "emb_arred": 5, "custo_total": 84.95}, {"nome": "INOVARE BRANCO", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 49.95, "qtd_sem": 1.0, "custo_sem": 49.95, "qtd_emb_sem": 0.5, "emb_arred": 1, "custo_total": 99.9}, {"nome": "AÇÚCAR REFINADO", "cat": "Açúcares", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 4.89, "qtd_sem": 8.145, "custo_sem": 39.83, "qtd_emb_sem": 8.145, "emb_arred": 9, "custo_total": 44.01}, {"nome": "LEITE", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 4.7, "qtd_sem": 8.0, "custo_sem": 37.6, "qtd_emb_sem": 8.0, "emb_arred": 8, "custo_total": 37.6}, {"nome": "SICAO BRANCO", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 93.0, "qtd_sem": 0.38, "custo_sem": 35.34, "qtd_emb_sem": 0.19, "emb_arred": 1, "custo_total": 186.0}, {"nome": "CREME CHEESE", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.5, "custo_unit": 37.926667, "qtd_sem": 0.9, "custo_sem": 34.13, "qtd_emb_sem": 0.6, "emb_arred": 1, "custo_total": 56.89}, {"nome": "CACAU EM PÓ", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 0.5, "custo_unit": 103.98, "qtd_sem": 0.32, "custo_sem": 33.27, "qtd_emb_sem": 0.64, "emb_arred": 1, "custo_total": 51.99}, {"nome": "LIMÃO", "cat": "Frutas", "unid": "Unid", "qtd_emb": 1.0, "custo_unit": 0.69, "qtd_sem": 48.0, "custo_sem": 33.12, "qtd_emb_sem": 48.0, "emb_arred": 48, "custo_total": 33.12}, {"nome": "FERMENTO EM PÓ", "cat": "Farinhas e Amidos", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 28.995, "qtd_sem": 1.0, "custo_sem": 29.0, "qtd_emb_sem": 0.5, "emb_arred": 1, "custo_total": 57.99}, {"nome": "AÇUCAR MASCAVO", "cat": "Açúcares", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 9.01, "qtd_sem": 2.98, "custo_sem": 26.85, "qtd_emb_sem": 2.98, "emb_arred": 3, "custo_total": 27.03}, {"nome": "OLÉO DE GIRASSOL", "cat": "Outros Ingredientes", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 11.99, "qtd_sem": 2.2, "custo_sem": 26.38, "qtd_emb_sem": 2.2, "emb_arred": 3, "custo_total": 35.97}, {"nome": "BISCOITO MAIZENA", "cat": "Especiais", "unid": "KG", "qtd_emb": 0.17, "custo_unit": 15.823529, "qtd_sem": 1.625, "custo_sem": 25.71, "qtd_emb_sem": 9.559, "emb_arred": 10, "custo_total": 26.9}, {"nome": "SICAO 40%", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 2.0, "custo_unit": 99.5, "qtd_sem": 0.25, "custo_sem": 24.88, "qtd_emb_sem": 0.125, "emb_arred": 1, "custo_total": 199.0}, {"nome": "LICOR CHOCOLATE", "cat": "Outros Ingredientes", "unid": "KG", "qtd_emb": 0.72, "custo_unit": 97.083333, "qtd_sem": 0.24, "custo_sem": 23.3, "qtd_emb_sem": 0.333, "emb_arred": 1, "custo_total": 69.9}, {"nome": "LEITE NINHO", "cat": "Laticínios", "unid": "KG", "qtd_emb": 0.7, "custo_unit": 29.857143, "qtd_sem": 0.64, "custo_sem": 19.11, "qtd_emb_sem": 0.914, "emb_arred": 1, "custo_total": 20.9}, {"nome": "SICAO 70%", "cat": "Chocolates e Coberturas", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 179.0, "qtd_sem": 0.1, "custo_sem": 17.9, "qtd_emb_sem": 0.1, "emb_arred": 1, "custo_total": 179.0}, {"nome": "ÁGUA", "cat": "Outros Ingredientes", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 1.65, "qtd_sem": 10.1033, "custo_sem": 16.67, "qtd_emb_sem": 10.103, "emb_arred": 11, "custo_total": 18.15}, {"nome": "SACO COM COLA COOKIE", "cat": "Embalagens", "unid": "Unid", "qtd_emb": 2000.0, "custo_unit": 0.15498, "qtd_sem": 95.0, "custo_sem": 14.72, "qtd_emb_sem": 0.048, "emb_arred": 1, "custo_total": 309.96}, {"nome": "GELEIA DE FRUTAS VERMELHAS", "cat": "Frutas", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 47.1, "qtd_sem": 0.3, "custo_sem": 14.13, "qtd_emb_sem": 0.3, "emb_arred": 1, "custo_total": 47.1}, {"nome": "CHANTILLY", "cat": "Laticínios", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 20.99, "qtd_sem": 0.6, "custo_sem": 12.59, "qtd_emb_sem": 0.6, "emb_arred": 1, "custo_total": 20.99}, {"nome": "COCO SECO", "cat": "Frutas", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 41.17, "qtd_sem": 0.26, "custo_sem": 10.7, "qtd_emb_sem": 0.26, "emb_arred": 1, "custo_total": 41.17}, {"nome": "POTE SOBREMESA", "cat": "Embalagens", "unid": "Unid", "qtd_emb": 50.0, "custo_unit": 3.84, "qtd_sem": 2.0, "custo_sem": 7.68, "qtd_emb_sem": 0.04, "emb_arred": 1, "custo_total": 192.0}, {"nome": "PASTA DE BAUNILHA", "cat": "Outros Ingredientes", "unid": "KG", "qtd_emb": 0.15, "custo_unit": 239.333333, "qtd_sem": 0.0242, "custo_sem": 5.78, "qtd_emb_sem": 0.161, "emb_arred": 1, "custo_total": 35.9}, {"nome": "PAPEL CELOFANE 20X20", "cat": "Embalagens", "unid": "Unid", "qtd_emb": 1200.0, "custo_unit": 0.0525, "qtd_sem": 48.0, "custo_sem": 2.52, "qtd_emb_sem": 0.04, "emb_arred": 1, "custo_total": 63.0}, {"nome": "BICARBONATO DE SODIO", "cat": "Farinhas e Amidos", "unid": "KG", "qtd_emb": 1.0, "custo_unit": 11.99, "qtd_sem": 0.1567, "custo_sem": 1.88, "qtd_emb_sem": 0.157, "emb_arred": 1, "custo_total": 11.99}]};
 
+// ════════════════════════════════════════════════════════════════════════════
+// PREVISÃO DINÂMICA — calcula a partir de vendasProdutosHistorico + fichas
+// ════════════════════════════════════════════════════════════════════════════
+function _normalizarNome(s) {
+  return String(s||'').toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,' ').trim();
+}
+
+function _gerarPrevisaoDinamica() {
+  // 1. Le vendas-produto historico
+  let vendasProd = [];
+  try { vendasProd = JSON.parse(localStorage.getItem('vendasProdutosHistorico') || '[]'); } catch(e) {}
+  if (!vendasProd.length) return null;
+
+  // 2. Le fichas tecnicas existentes (sao globais)
+  const fichasList = (typeof fichas !== 'undefined') ? fichas : [];
+
+  // 3. Cria mapa de ficha por nome normalizado (procura matches)
+  function acharFicha(nomeProduto) {
+    const norm = _normalizarNome(nomeProduto);
+    // Match exato
+    let f = fichasList.find(x => _normalizarNome(x.nome) === norm);
+    if (f) return f;
+    // Match parcial (ficha contém produto OU produto contém ficha)
+    f = fichasList.find(x => {
+      const fn = _normalizarNome(x.nome);
+      return fn.includes(norm) || norm.includes(fn);
+    });
+    return f;
+  }
+
+  // 4. Para cada produto vendido, calcula: media diaria, semanal (4.3 sem/mes)
+  const produtos = [];
+  vendasProd.forEach(vp => {
+    const qtdMes = vp.qtdTotal || 0;
+    if (qtdMes <= 0) return;
+    const mediaSem = qtdMes / 4.3;  // semanas no mes
+    const metaSem = Math.ceil(mediaSem * 1.1); // +10% seguranca
+    const ficha = acharFicha(vp.produto);
+
+    produtos.push({
+      item: vp.produto,
+      ficha: ficha ? ficha.nome : '(sem ficha)',
+      fichaId: ficha ? ficha.id : null,
+      qtd_periodo: qtdMes,
+      media_sem: parseFloat(mediaSem.toFixed(1)),
+      meta_sem: metaSem,
+      rendimento_un: ficha?.rendimento || 1,
+      receitas_sem: ficha?.rendimento > 0 ? Math.ceil(metaSem / ficha.rendimento) : 0,
+      unidades_prod: ficha?.rendimento > 0 ? Math.ceil(metaSem / ficha.rendimento) * ficha.rendimento : metaSem,
+      valor_semana: mediaSem * (vp.precoMedio || 0),
+      cmv_unit: vp.cmvUnit || 0,
+      sem_ficha: !ficha,
+    });
+  });
+
+  // Ordena por qtd_periodo decrescente
+  produtos.sort((a,b) => b.qtd_periodo - a.qtd_periodo);
+
+  // 5. Calcula lista de compras consolidada baseada nas fichas
+  const insumosMap = (typeof INSUMOS_DATA !== 'undefined') ? INSUMOS_DATA : {};
+  const compras = {};
+
+  produtos.forEach(p => {
+    if (!p.fichaId) return;
+    const ficha = fichasList.find(f => f.id === p.fichaId);
+    if (!ficha || !ficha.ingredientes) return;
+    const fatorReceitas = p.receitas_sem || 0;
+    if (!fatorReceitas) return;
+
+    ficha.ingredientes.forEach(ing => {
+      const nomeIns = ing.nome || ing.insumo;
+      if (!nomeIns) return;
+      const qtdReceita = ing.quantidade || ing.qtd || 0;
+      const qtdSemana = qtdReceita * fatorReceitas;
+      if (!compras[nomeIns]) {
+        // Tenta achar dados do insumo
+        const ins = Object.values(insumosMap).find(i => _normalizarNome(i.nome) === _normalizarNome(nomeIns));
+        compras[nomeIns] = {
+          nome: nomeIns,
+          cat: ins?.cat || 'Outros',
+          unid: ins?.unid || (ing.unidade || ing.unid || 'KG'),
+          qtd_emb: ins?.qtd_emb || 1,
+          custo_unit: ins?.custo_unit || 0,
+          qtd_sem: 0,
+          custo_sem: 0,
+        };
+      }
+      compras[nomeIns].qtd_sem += qtdSemana;
+      compras[nomeIns].custo_sem += qtdSemana * (compras[nomeIns].custo_unit || 0);
+    });
+  });
+
+  // Converte map -> array e calcula emb arredondadas
+  const lista_compras = Object.values(compras).map(c => {
+    const qtd_emb_sem = c.qtd_emb > 0 ? c.qtd_sem / c.qtd_emb : 0;
+    const emb_arred = Math.ceil(qtd_emb_sem);
+    return {
+      ...c,
+      qtd_emb_sem: parseFloat(qtd_emb_sem.toFixed(3)),
+      emb_arred,
+      custo_total: emb_arred * (c.custo_unit * c.qtd_emb),
+      qtd_sem: parseFloat(c.qtd_sem.toFixed(4)),
+      custo_sem: parseFloat(c.custo_sem.toFixed(2)),
+    };
+  }).sort((a,b) => b.custo_sem - a.custo_sem);
+
+  return {
+    loja: vendasProd[0]?.loja || 'Funcionários',
+    mesReferencia: vendasProd[0]?.mesAno || '',
+    periodo_dias: 30,
+    semanas: 4.3,
+    produtos,
+    lista_compras,
+    fonte: 'dinamica',
+  };
+}
+
 function initProducao() { renderProducao(); }
 
 function renderProducao() {
   const page = document.getElementById('page-producao');
   if (!page) return;
 
-  const d      = PREVISAO_DATA;
+  // Prefere previsao dinamica (dados reais importados) sobre hardcoded
+  const dinamica = _gerarPrevisaoDinamica();
+  const d      = dinamica || PREVISAO_DATA;
   const prods  = d.produtos;
   const compras= d.lista_compras;
 
