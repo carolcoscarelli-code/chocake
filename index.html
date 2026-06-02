@@ -12415,7 +12415,7 @@ function _gerarPrevisaoDinamica() {
       media_sem: parseFloat(mediaSem.toFixed(1)),
       meta_sem: metaSem,
       rendimento_un: ficha?.rendimento || 1,
-      receitas_sem: ficha?.rendimento > 0 ? Math.ceil(metaSem / ficha.rendimento) : 0,
+      receitas_sem: (_parseRendimento(ficha?.rendimento) > 0 ? Math.ceil(metaSem / _parseRendimento(ficha.rendimento)) : 0),
       unidades_prod: (_parseRendimento(ficha?.rendimento) > 0 ? Math.ceil(metaSem / _parseRendimento(ficha.rendimento)) * _parseRendimento(ficha.rendimento) : metaSem),
       valor_semana: mediaSem * (vp.precoMedio || 0),
       cmv_unit: vp.cmvUnit || 0,
